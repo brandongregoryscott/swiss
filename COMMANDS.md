@@ -17,6 +17,7 @@
 - [`swiss clean [DIR]`](#swiss-clean-dir)
 - [`swiss config init`](#swiss-config-init)
 - [`swiss config show`](#swiss-config-show)
+- [`swiss configure`](#swiss-configure)
 - [`swiss cron [PATTERN]`](#swiss-cron-pattern)
 - [`swiss cron examples [SEARCH]`](#swiss-cron-examples-search)
 - [`swiss date [INPUT]`](#swiss-date-input)
@@ -37,6 +38,7 @@
 - [`swiss gen secret`](#swiss-gen-secret)
 - [`swiss gen slug`](#swiss-gen-slug)
 - [`swiss gen uuid`](#swiss-gen-uuid)
+- [`swiss git squash MESSAGE... [--from BRANCH]`](#swiss-git-squash-message---from-branch)
 - [`swiss help [COMMAND]`](#swiss-help-command)
 - [`swiss jq FILTER [FILE]`](#swiss-jq-filter-file)
 - [`swiss jq count-by ARRAY FIELD [FILE]`](#swiss-jq-count-by-array-field-file)
@@ -499,6 +501,41 @@ EXAMPLES
   Open the config file in your editor
 
     $EDITOR "$(swiss config show --path)"
+```
+
+## `swiss configure`
+
+Ensure your zsh startup files contain the aliases, environment variables, and PATH additions in your Swiss config.
+
+```
+USAGE
+  $ swiss configure
+
+DESCRIPTION
+  Ensure your zsh startup files contain the aliases, environment variables, and PATH additions in your Swiss config.
+
+  Settings live in the "zsh" section of ~/.config/swiss/config.json (or $XDG_CONFIG_HOME/swiss/config.json). Run `swiss
+  config init` to write an editable template. Without that section, the defaults install Finder show/hide aliases,
+  reload and the gcsquash alias. Finder aliases require macOS; no Oh My Zsh plugins are required.
+
+  aliases and env map names to command or value strings; path is a list of directories to prepend to PATH. Omitted
+  settings use defaults. An explicit aliases object replaces the default alias selection, including gcsquash. Settings
+  left out do not delete existing shell definitions.
+
+  Existing editable definitions are updated where they live. New aliases, exports and paths use the same placement as
+  the zsh set/add commands; gcsquash delegates to the TypeScript git squash command. Matching definitions are left
+  unchanged, so this is safe to rerun. Changes are checked with zsh -n. Existing editable functions with the same names
+  are replaced with aliases. No files from a Swiss checkout are sourced. Environment values are never printed.
+
+  gcsquash [--from BRANCH | -f BRANCH] COMMIT MESSAGE... requires a clean working tree and an ancestor base, defaults to
+  origin/HEAD then local main or master, and saves a recovery reference before rewriting history.
+
+  Your zsh startup files are ~/.zshenv, ~/.zprofile and ~/.zshrc (in $ZDOTDIR when it's set), along with the files they
+  source that are your own: files in your home directory that aren't inside a hidden directory, like ~/.oh-my-zsh or
+  ~/.nvm, apart from ~/.config, ~/.dotfiles, ~/.zsh and ~/.zshrc.d. `swiss zsh files` lists them.
+
+EXAMPLES
+  $ swiss configure
 ```
 
 ## `swiss cron [PATTERN]`
@@ -1265,6 +1302,35 @@ EXAMPLES
   Generate 5 time-ordered UUIDs
 
     $ swiss gen uuid --v7 -n 5
+```
+
+## `swiss git squash MESSAGE... [--from BRANCH]`
+
+Squash a feature branch's commits into one commit.
+
+```
+USAGE
+  $ swiss git squash MESSAGE... [--from BRANCH]
+
+FLAGS
+  -f, --from=<value>  Base branch to squash commits since
+
+DESCRIPTION
+  Squash a feature branch's commits into one commit.
+
+  Defaults to origin/HEAD, then local main or master. --from picks another base, which must be an ancestor of HEAD.
+  Requires a clean working tree, including staged, unstaged and untracked files, and refuses detached HEAD, main/master,
+  the base branch and unfinished Git operations.
+
+  Saves the old HEAD under refs/swiss/gcsquash/ before resetting. Git commit runs with your terminal for hooks and
+  signing. If committing fails, changes remain staged and a recovery command is printed. Nothing is pushed.
+
+  Run configure to install gcsquash as an alias for this command.
+
+EXAMPLES
+  $ swiss git squash "Add account settings"
+
+  $ swiss git squash --from master "Add account settings"
 ```
 
 ## `swiss help [COMMAND]`

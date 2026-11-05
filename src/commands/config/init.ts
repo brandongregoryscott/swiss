@@ -2,9 +2,11 @@ import { isEmpty } from "lodash-es";
 import { SwissCommand } from "../../shared/command.js";
 import { ConfigFile } from "../../shared/config/config.js";
 import { OrgConfigSection } from "../../shared/config/org-config.js";
+import { ZshConfigSection } from "../../shared/config/zsh-config.js";
 
 const TEMPLATES = {
     [OrgConfigSection.NAME]: OrgConfigSection.TEMPLATE,
+    [ZshConfigSection.NAME]: ZshConfigSection.TEMPLATE,
 };
 
 export default class ConfigInit extends SwissCommand {

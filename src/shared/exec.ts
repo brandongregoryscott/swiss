@@ -21,10 +21,19 @@ type RunOptions = {
     stderr?: boolean;
 };
 
+type InteractiveOptions = { cwd?: string };
+
 class Exec {
-    static interactive(command: string, args: string[]): Promise<void> {
+    static interactive(
+        command: string,
+        args: string[],
+        options: InteractiveOptions = {}
+    ): Promise<void> {
         return new Promise((resolve, reject) => {
-            const child = spawn(command, args, { stdio: "inherit" });
+            const child = spawn(command, args, {
+                cwd: options.cwd,
+                stdio: "inherit",
+            });
             child.on("error", (error) => {
                 reject(new CommandError(describeFailure(command, error)));
             });

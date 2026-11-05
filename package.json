@@ -64,6 +64,9 @@
             "gen": {
                 "description": "Generate IDs, slugs, AWS ARNs, JWTs, IP and MAC addresses, hashes, passwords, secrets, lorem ipsum and fake data"
             },
+            "git": {
+                "description": "Git workflows with recovery checks"
+            },
             "jq": {
                 "description": "Query JSON with jq, find paths in it, compare it, and run common queries without writing jq"
             },
