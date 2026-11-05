@@ -1,21 +1,17 @@
 import { SwissCommand } from "../shared/command.js";
 import { ConfigFile } from "../shared/config/config.js";
 import { ZshConfigSection } from "../shared/config/zsh-config.js";
+import { Text } from "../shared/text.js";
+import { TerminalProfile } from "../topics/configure/terminal-profile.js";
 import { configureZsh } from "../topics/zsh/configure.js";
 import { ZshStartup } from "../topics/zsh/startup.js";
 
 export default class Configure extends SwissCommand {
-    static override description = `Ensure your zsh startup files contain the aliases, environment variables, and PATH additions in your Swiss config.
+    static override description = `Apply your Swiss configuration to this machine.
 
-Settings live in the "zsh" section of ${ConfigFile.DISPLAY_PATH}. Run \`<%= config.bin %> config init\` to write an editable template. Without that section, the defaults install Finder show/hide aliases, reload and the gcsquash alias. Finder aliases require macOS; no Oh My Zsh plugins are required.
+Reads ${ConfigFile.DISPLAY_PATH}, using defaults for settings left out. Run \`<%= config.bin %> config init\` to create an editable template.
 
-aliases and env map names to command or value strings; path is a list of directories to prepend to PATH. Omitted settings use defaults. An explicit aliases object replaces the default alias selection, including gcsquash. Settings left out do not delete existing shell definitions.
-
-Existing editable definitions are updated where they live. New aliases, exports and paths use the same placement as the zsh set/add commands; gcsquash delegates to the TypeScript git squash command. Matching definitions are left unchanged, so this is safe to rerun. Changes are checked with zsh -n. Existing editable functions with the same names are replaced with aliases. No files from a Swiss checkout are sourced. Environment values are never printed.
-
-gcsquash [--from BRANCH | -f BRANCH] COMMIT MESSAGE... requires a clean working tree and an ancestor base, defaults to origin/HEAD then local main or master, and saves a recovery reference before rewriting history.
-
-${ZshStartup.FILES_HELP}`;
+Applies settings and bundled configuration files for your platform, reporting what changed and where each setting or file was written. Matching settings and files are left unchanged, so this is safe to rerun after updating Swiss or your config.`;
 
     static override examples = ["<%= config.bin %> <%= command.id %>"];
 
@@ -38,6 +34,15 @@ ${ZshStartup.FILES_HELP}`;
             this.log("Your shell already has these settings");
         } else {
             this.log(this.style("dim", ZshStartup.reloadHint(written)));
+        }
+        const profile = await TerminalProfile.install(this.config.dataDir);
+        if (profile != null) {
+            this.log(
+                `Terminal profile ${profile.status}: ${Text.displayPath(profile.path)}`
+            );
+            this.log(
+                "Import this file in Terminal > Settings > Profiles > Import, then select it as the default if desired."
+            );
         }
     }
 }

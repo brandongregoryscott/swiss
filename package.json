@@ -9,6 +9,7 @@
         "sws": "./bin/run.js"
     },
     "files": [
+        "/assets",
         "/bin",
         "/dist"
     ],

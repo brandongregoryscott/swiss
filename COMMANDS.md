@@ -505,34 +505,21 @@ EXAMPLES
 
 ## `swiss configure`
 
-Ensure your zsh startup files contain the aliases, environment variables, and PATH additions in your Swiss config.
+Apply your Swiss configuration to this machine.
 
 ```
 USAGE
   $ swiss configure
 
 DESCRIPTION
-  Ensure your zsh startup files contain the aliases, environment variables, and PATH additions in your Swiss config.
+  Apply your Swiss configuration to this machine.
 
-  Settings live in the "zsh" section of ~/.config/swiss/config.json (or $XDG_CONFIG_HOME/swiss/config.json). Run `swiss
-  config init` to write an editable template. Without that section, the defaults install Finder show/hide aliases,
-  reload and the gcsquash alias. Finder aliases require macOS; no Oh My Zsh plugins are required.
+  Reads ~/.config/swiss/config.json (or $XDG_CONFIG_HOME/swiss/config.json), using defaults for settings left out. Run
+  `swiss config init` to create an editable template.
 
-  aliases and env map names to command or value strings; path is a list of directories to prepend to PATH. Omitted
-  settings use defaults. An explicit aliases object replaces the default alias selection, including gcsquash. Settings
-  left out do not delete existing shell definitions.
-
-  Existing editable definitions are updated where they live. New aliases, exports and paths use the same placement as
-  the zsh set/add commands; gcsquash delegates to the TypeScript git squash command. Matching definitions are left
-  unchanged, so this is safe to rerun. Changes are checked with zsh -n. Existing editable functions with the same names
-  are replaced with aliases. No files from a Swiss checkout are sourced. Environment values are never printed.
-
-  gcsquash [--from BRANCH | -f BRANCH] COMMIT MESSAGE... requires a clean working tree and an ancestor base, defaults to
-  origin/HEAD then local main or master, and saves a recovery reference before rewriting history.
-
-  Your zsh startup files are ~/.zshenv, ~/.zprofile and ~/.zshrc (in $ZDOTDIR when it's set), along with the files they
-  source that are your own: files in your home directory that aren't inside a hidden directory, like ~/.oh-my-zsh or
-  ~/.nvm, apart from ~/.config, ~/.dotfiles, ~/.zsh and ~/.zshrc.d. `swiss zsh files` lists them.
+  Applies settings and bundled configuration files for your platform, reporting what changed and where each setting or
+  file was written. Matching settings and files are left unchanged, so this is safe to rerun after updating Swiss or
+  your config.
 
 EXAMPLES
   $ swiss configure
