@@ -1,0 +1,143 @@
+{
+    "name": "swiss",
+    "version": "0.0.0",
+    "description": "Personal multi-tool CLI",
+    "private": true,
+    "type": "module",
+    "bin": {
+        "swiss": "./bin/run.js",
+        "sws": "./bin/run.js"
+    },
+    "files": [
+        "/bin",
+        "/dist"
+    ],
+    "engines": {
+        "node": ">=22.13"
+    },
+    "scripts": {
+        "build": "rm -rf dist && tsc -p tsconfig.build.json",
+        "readme": "npm run build && oclif readme --readme-path COMMANDS.md --no-source-links --no-aliases && prettier --write README.md COMMANDS.md",
+        "readme:check": "npm run readme && git diff --exit-code README.md COMMANDS.md",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run",
+        "prepare": "npm run build",
+        "format": "prettier --check \"**/*.{json,mjs,js,ts,md,yml}\"",
+        "format:fix": "prettier --write \"**/*.{json,mjs,js,ts,md,yml}\"",
+        "lint": "eslint \"**/*.{ts,js}\"",
+        "lint:fix": "eslint \"**/*.{ts,js}\" --fix"
+    },
+    "oclif": {
+        "bin": "swiss",
+        "binAliases": [
+            "sws"
+        ],
+        "dirname": "swiss",
+        "commands": "./dist/commands",
+        "plugins": [
+            "@oclif/plugin-autocomplete",
+            "@oclif/plugin-help"
+        ],
+        "topicSeparator": " ",
+        "topics": {
+            "audio": {
+                "description": "Classify and trim samples, split, make stereo, normalize and convert audio files"
+            },
+            "base64": {
+                "description": "Encode and decode base64"
+            },
+            "clean": {
+                "description": "Delete dependency and build output directories"
+            },
+            "config": {
+                "description": "Manage the swiss config file"
+            },
+            "cron": {
+                "description": "Explain cron patterns and list common ones"
+            },
+            "date": {
+                "description": "Convert and compare dates and timestamps"
+            },
+            "env": {
+                "description": "View and edit the env files in a project, like a monorepo's apps/*/.env"
+            },
+            "gen": {
+                "description": "Generate IDs, slugs, AWS ARNs, JWTs, IP and MAC addresses, hashes, passwords, secrets, lorem ipsum and fake data"
+            },
+            "jq": {
+                "description": "Query JSON with jq, find paths in it, compare it, and run common queries without writing jq"
+            },
+            "jwt": {
+                "description": "Decode JSON Web Tokens"
+            },
+            "loc": {
+                "description": "Count the lines of code in a git repo, chart them over time, and see who wrote them"
+            },
+            "note": {
+                "description": "Jot down notes and snippets outside any repo, and copy them back later"
+            },
+            "org": {
+                "description": "Work with every repo in a GitHub org"
+            },
+            "port": {
+                "description": "See and stop what's listening on TCP ports"
+            },
+            "repo": {
+                "description": "Work with the repos in your GitHub account or an org"
+            },
+            "serve": {
+                "description": "Serve a directory over HTTP"
+            },
+            "table": {
+                "description": "Fill out markdown tables for GitHub in the browser"
+            },
+            "worktree": {
+                "description": "List git worktrees, and remove them while checking out their branch in the main worktree"
+            },
+            "zsh": {
+                "description": "View and change the aliases, environment variables and PATH in your zsh startup files"
+            },
+            "zsh:alias": {
+                "description": "List, add and remove the aliases in your zsh startup files"
+            },
+            "zsh:env": {
+                "description": "List, set and remove the environment variables your zsh startup files export"
+            },
+            "zsh:path": {
+                "description": "See where each PATH directory comes from, and add or remove them"
+            }
+        }
+    },
+    "dependencies": {
+        "@clack/core": "1.5.1",
+        "@clack/prompts": "1.8.1",
+        "@date-fns/tz": "1.5.0",
+        "@faker-js/faker": "10.6.0",
+        "@oclif/core": "5.1.9",
+        "@oclif/plugin-autocomplete": "4.0.6",
+        "@oclif/plugin-help": "7.0.5",
+        "cron-parser": "5.10.2",
+        "cronstrue": "3.31.0",
+        "date-fns": "4.4.0",
+        "jq-wasm": "3.0.0-jq-1.8.2",
+        "lodash-es": "4.18.1",
+        "tree-sitter": "0.25.1",
+        "tree-sitter-zsh": "0.63.1"
+    },
+    "devDependencies": {
+        "@stylistic/eslint-plugin": "5.6.1",
+        "@types/lodash-es": "4.17.12",
+        "@types/node": "26.6.5",
+        "eslint": "9.39.3",
+        "eslint-import-resolver-typescript": "4.4.5",
+        "eslint-plugin-collation": "1.7.0",
+        "eslint-plugin-import": "2.32.0",
+        "eslint-plugin-perfectionist": "5.6.0",
+        "oclif": "6.0.5",
+        "prettier": "3.8.1",
+        "tsx": "4.23.15",
+        "typescript": "6.0.3",
+        "typescript-eslint": "8.71.2",
+        "vitest": "4.1.12"
+    }
+}
