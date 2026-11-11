@@ -17,21 +17,25 @@ type LinkedSkill = {
     status: "added" | "skipped" | "unchanged" | "updated";
 };
 
-class ClaudeSkills {
+class Skills {
     static readonly ASSETS = fileURLToPath(
         new URL("../../../assets/skills", import.meta.url)
     );
 
-    static directory(env: NodeJS.ProcessEnv = process.env): string {
+    static claudeDirectory(env: NodeJS.ProcessEnv = process.env): string {
         return path.join(
             env.CLAUDE_CONFIG_DIR ?? path.join(homedir(), ".claude"),
             "skills"
         );
     }
 
+    static codexDirectory(): string {
+        return path.join(homedir(), ".agents", "skills");
+    }
+
     static async link(
-        skillsDir: string = ClaudeSkills.directory(),
-        assetsDir: string = ClaudeSkills.ASSETS
+        skillsDir: string,
+        assetsDir: string = Skills.ASSETS
     ): Promise<LinkedSkill[]> {
         const entries = await readdir(assetsDir, { withFileTypes: true });
         const names = entries
@@ -46,7 +50,7 @@ class ClaudeSkills {
             linked.push({
                 name,
                 path: destination,
-                status: await ClaudeSkills.#linkOne(source, destination),
+                status: await Skills.#linkOne(source, destination),
             });
         }
         return linked;
@@ -77,5 +81,5 @@ class ClaudeSkills {
     }
 }
 
-export { ClaudeSkills };
+export { Skills };
 export type { LinkedSkill };

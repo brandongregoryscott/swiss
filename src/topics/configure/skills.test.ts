@@ -6,12 +6,12 @@ import {
     rmSync,
     symlinkSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { ClaudeSkills } from "./claude-skills.js";
+import { Skills } from "./skills.js";
 
-describe("ClaudeSkills", () => {
+describe.each([".claude", ".agents"])("Skills in %s", (agentDir) => {
     let dir: string;
     let assetsDir: string;
     let skillsDir: string;
@@ -19,15 +19,15 @@ describe("ClaudeSkills", () => {
     beforeEach(() => {
         dir = mkdtempSync(path.join(tmpdir(), "swiss-skills-"));
         assetsDir = path.join(dir, "assets");
-        skillsDir = path.join(dir, "claude", "skills");
+        skillsDir = path.join(dir, agentDir, "skills");
         mkdirSync(path.join(assetsDir, "pre-review"), { recursive: true });
     });
     afterEach(() => rmSync(dir, { force: true, recursive: true }));
 
     it("links each bundled skill and leaves it alone on a second run", async () => {
-        const first = await ClaudeSkills.link(skillsDir, assetsDir);
+        const first = await Skills.link(skillsDir, assetsDir);
 
-        const second = await ClaudeSkills.link(skillsDir, assetsDir);
+        const second = await Skills.link(skillsDir, assetsDir);
 
         const destination = path.join(skillsDir, "pre-review");
         expect(first).toEqual([
@@ -46,7 +46,7 @@ describe("ClaudeSkills", () => {
             path.join(skillsDir, "pre-review")
         );
 
-        const result = await ClaudeSkills.link(skillsDir, assetsDir);
+        const result = await Skills.link(skillsDir, assetsDir);
 
         expect(result[0]?.status).toBe("updated");
         expect(readlinkSync(path.join(skillsDir, "pre-review"))).toBe(
@@ -57,17 +57,31 @@ describe("ClaudeSkills", () => {
     it("skips a real directory with the same name", async () => {
         mkdirSync(path.join(skillsDir, "pre-review"), { recursive: true });
 
-        const result = await ClaudeSkills.link(skillsDir, assetsDir);
+        const result = await Skills.link(skillsDir, assetsDir);
 
         expect(result[0]?.status).toBe("skipped");
         expect(
             lstatSync(path.join(skillsDir, "pre-review")).isDirectory()
         ).toBe(true);
     });
+});
 
+describe("Skills directories", () => {
     it("uses CLAUDE_CONFIG_DIR when it's set", () => {
-        const result = ClaudeSkills.directory({ CLAUDE_CONFIG_DIR: "/cfg" });
+        const result = Skills.claudeDirectory({ CLAUDE_CONFIG_DIR: "/cfg" });
 
         expect(result).toBe(path.join("/cfg", "skills"));
+    });
+
+    it("defaults to the user's Claude skills directory", () => {
+        expect(Skills.claudeDirectory({})).toBe(
+            path.join(homedir(), ".claude", "skills")
+        );
+    });
+
+    it("uses the user's agents skills directory for Codex", () => {
+        expect(Skills.codexDirectory()).toBe(
+            path.join(homedir(), ".agents", "skills")
+        );
     });
 });

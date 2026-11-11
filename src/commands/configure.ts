@@ -2,7 +2,7 @@ import { SwissCommand } from "../shared/command.js";
 import { ConfigFile } from "../shared/config/config.js";
 import { ZshConfigSection } from "../shared/config/zsh-config.js";
 import { Text } from "../shared/text.js";
-import { ClaudeSkills } from "../topics/configure/claude-skills.js";
+import { Skills } from "../topics/configure/skills.js";
 import { TerminalProfile } from "../topics/configure/terminal-profile.js";
 import { configureZsh } from "../topics/zsh/configure.js";
 import { ZshStartup } from "../topics/zsh/startup.js";
@@ -12,7 +12,7 @@ export default class Configure extends SwissCommand {
 
 Reads ${ConfigFile.DISPLAY_PATH}, using defaults for settings left out. Run \`<%= config.bin %> config init\` to create an editable template.
 
-Links the Claude Code skills bundled in assets/skills into ~/.claude/skills (or $CLAUDE_CONFIG_DIR/skills), so edits to them apply everywhere. A skill already there as a real directory is skipped.
+Links the skills bundled in assets/skills into ~/.claude/skills (or $CLAUDE_CONFIG_DIR/skills) for Claude Code and ~/.agents/skills for Codex, so edits to them apply everywhere. A skill already there as a real directory is skipped.
 
 Applies settings and bundled configuration files for your platform, reporting what changed and where each setting or file was written. Matching settings and files are left unchanged, so this is safe to rerun after updating Swiss or your config.`;
 
@@ -47,12 +47,17 @@ Applies settings and bundled configuration files for your platform, reporting wh
                 "Import this file in Terminal > Settings > Profiles > Import, then select it as the default if desired."
             );
         }
-        for (const skill of await ClaudeSkills.link()) {
-            this.log(
-                skill.status === "skipped"
-                    ? `Claude skill ${skill.name} skipped: ${Text.displayPath(skill.path)} exists and isn't a link`
-                    : `Claude skill ${skill.name} ${skill.status}: ${Text.displayPath(skill.path)}`
-            );
+        for (const [agent, directory] of [
+            ["Claude", Skills.claudeDirectory()],
+            ["Codex", Skills.codexDirectory()],
+        ] as const) {
+            for (const skill of await Skills.link(directory)) {
+                this.log(
+                    skill.status === "skipped"
+                        ? `${agent} skill ${skill.name} skipped: ${Text.displayPath(skill.path)} exists and isn't a link`
+                        : `${agent} skill ${skill.name} ${skill.status}: ${Text.displayPath(skill.path)}`
+                );
+            }
         }
     }
 }
