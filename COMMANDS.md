@@ -517,6 +517,9 @@ DESCRIPTION
   Reads ~/.config/swiss/config.json (or $XDG_CONFIG_HOME/swiss/config.json), using defaults for settings left out. Run
   `swiss config init` to create an editable template.
 
+  Links the Claude Code skills bundled in assets/skills into ~/.claude/skills (or $CLAUDE_CONFIG_DIR/skills), so edits
+  to them apply everywhere. A skill already there as a real directory is skipped.
+
   Applies settings and bundled configuration files for your platform, reporting what changed and where each setting or
   file was written. Matching settings and files are left unchanged, so this is safe to rerun after updating Swiss or
   your config.
