@@ -22,6 +22,8 @@
 - [`swiss cron examples [SEARCH]`](#swiss-cron-examples-search)
 - [`swiss date [INPUT]`](#swiss-date-input)
 - [`swiss date diff START [END]`](#swiss-date-diff-start-end)
+- [`swiss docker`](#swiss-docker)
+- [`swiss docker prune [TARGET]`](#swiss-docker-prune-target)
 - [`swiss env [SEARCH]`](#swiss-env-search)
 - [`swiss env check`](#swiss-env-check)
 - [`swiss env edit [FILE]`](#swiss-env-edit-file)
@@ -719,6 +721,71 @@ EXAMPLES
   Print just the number of hours in today
 
     $ swiss date diff today tomorrow --format hours
+```
+
+## `swiss docker`
+
+Show Docker disk usage and reclaimable space.
+
+```
+USAGE
+  $ swiss docker [-v]
+
+FLAGS
+  -v, --verbose  Include individual images, containers, volumes and build cache
+
+DESCRIPTION
+  Show Docker disk usage and reclaimable space.
+
+  Uses your current Docker context and environment. Run docker prune to clean up unused resources.
+
+EXAMPLES
+  $ swiss docker
+
+  $ swiss docker --verbose
+```
+
+## `swiss docker prune [TARGET]`
+
+Free disk space by pruning unused Docker resources.
+
+```
+USAGE
+  $ swiss docker prune [TARGET] [-y] [-a] [--dry-run] [--volumes]
+
+ARGUMENTS
+  [TARGET]  (system|images|cache) [default: system] Clean up the whole system, only images, or only build cache
+
+FLAGS
+  -a, --all      Also remove all unused images, or all unused build cache for the cache target
+  -y, --yes      Remove them without asking first, which is required when there's no terminal to ask in
+      --dry-run  Show disk usage and cleanup scope without pruning
+      --volumes  Also delete unused anonymous volumes and their data (system target only)
+
+DESCRIPTION
+  Free disk space by pruning unused Docker resources.
+
+  By default, remove stopped containers (including their writable data), unused networks, dangling images and unused
+  build cache. Use images or cache to limit cleanup. --all also removes images without any container referencing them,
+  or all unused build cache for the cache target. Images and cache may need to be downloaded or rebuilt later.
+
+  Volumes are kept unless --volumes is passed with the system target; that also removes unused anonymous volumes and
+  their data. Named volumes are kept.
+
+  Shows disk usage, cleanup scope and the Docker command before asking for consent. --dry-run only shows this
+  information; Docker does not provide an exact prune preview. --yes skips asking and is required without an interactive
+  terminal. Uses your current Docker context and environment.
+
+EXAMPLES
+  $ swiss docker prune
+
+  $ swiss docker prune images --all
+
+  $ swiss docker prune cache
+
+  $ swiss docker prune --all --dry-run
+
+  $ swiss docker prune --yes
 ```
 
 ## `swiss env [SEARCH]`

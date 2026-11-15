@@ -59,6 +59,9 @@
             "date": {
                 "description": "Convert and compare dates and timestamps"
             },
+            "docker": {
+                "description": "See Docker disk usage and prune unused resources"
+            },
             "env": {
                 "description": "View and edit the env files in a project, like a monorepo's apps/*/.env"
             },
