@@ -25,6 +25,7 @@ import type { BumpOptions, ScannedPlan } from "./bump.js";
 import { GitHub } from "../../shared/git/github.js";
 import { PackageBump } from "./bump.js";
 import { LockfileError } from "./lockfiles.js";
+import { fakeManifest } from "./manifest-fixtures.js";
 
 const ORG = "acme";
 
@@ -80,9 +81,15 @@ describe("PackageBump", () => {
     describe("plan", () => {
         it("finds every manifest on origin that depends on the package", async () => {
             const repo = createRemote("monorepo", {
-                "apps/api/package.json": manifest({ "@acme/cats": "^1.2.0" }),
-                "apps/web/package.json": manifest({ "@acme/cats": "1.4.0" }),
-                "package.json": manifest({ "@acme/dogs": "^1.0.0" }),
+                "apps/api/package.json": fakeManifest({
+                    dependencies: { "@acme/cats": "^1.2.0" },
+                }),
+                "apps/web/package.json": fakeManifest({
+                    dependencies: { "@acme/cats": "1.4.0" },
+                }),
+                "package.json": fakeManifest({
+                    dependencies: { "@acme/dogs": "^1.0.0" },
+                }),
             });
             cloneLocal(repo);
 
@@ -113,7 +120,9 @@ describe("PackageBump", () => {
 
         it("reports a repo that isn't cloned", async () => {
             const repo = createRemote("widget", {
-                "package.json": manifest({ "@acme/cats": "^1.2.0" }),
+                "package.json": fakeManifest({
+                    dependencies: { "@acme/cats": "^1.2.0" },
+                }),
             });
 
             const result = await PackageBump.plan(repo, TARGET, config);
@@ -123,7 +132,9 @@ describe("PackageBump", () => {
 
         it("skips a repo whose bump branch is already on origin", async () => {
             const repo = createRemote("widget", {
-                "package.json": manifest({ "@acme/cats": "^1.2.0" }),
+                "package.json": fakeManifest({
+                    dependencies: { "@acme/cats": "^1.2.0" },
+                }),
             });
             git(seedDir(repo), "push", "--quiet", "origin", `HEAD:${BRANCH}`);
             cloneLocal(repo);
@@ -141,7 +152,9 @@ describe("PackageBump", () => {
         it("pushes the bump from origin's default branch and opens a pull request", async () => {
             const repo = createRemote("widget", {
                 ".github/pull_request_template.md": TEMPLATE,
-                "package.json": manifest({ "@acme/cats": "^1.2.0" }),
+                "package.json": fakeManifest({
+                    dependencies: { "@acme/cats": "^1.2.0" },
+                }),
             });
             const localDir = cloneLocal(repo);
             writeFileSync(path.join(localDir, "package.json"), "local edit");
@@ -157,13 +170,7 @@ describe("PackageBump", () => {
                 });
             const options = bumpOptions();
 
-            const result = await PackageBump.apply(
-                repo,
-                plan,
-                TARGET,
-                config,
-                options
-            );
+            const result = await PackageBump.apply(repo, plan, options);
 
             expect(result).toEqual({
                 status: "opened",
@@ -222,7 +229,9 @@ describe("PackageBump", () => {
 
         it("reports a failed lockfile update and cleans up", async () => {
             const repo = createRemote("widget", {
-                "package.json": manifest({ "@acme/cats": "^1.2.0" }),
+                "package.json": fakeManifest({
+                    dependencies: { "@acme/cats": "^1.2.0" },
+                }),
             });
             const localDir = cloneLocal(repo);
             const plan = await scannedPlan(repo);
@@ -232,13 +241,7 @@ describe("PackageBump", () => {
                 new LockfileError("npm install failed")
             );
 
-            const result = await PackageBump.apply(
-                repo,
-                plan,
-                TARGET,
-                config,
-                options
-            );
+            const result = await PackageBump.apply(repo, plan, options);
 
             expect(result).toEqual({
                 reason: "npm install failed",
@@ -277,6 +280,7 @@ async function scannedPlan(repo: OrgRepo): Promise<ScannedPlan> {
 function bumpOptions(): BumpOptions {
     return {
         changelog: vi.fn(() => Promise.resolve("- feat: add whiskers")),
+        config,
         draft: true,
         lockfiles: {
             update: vi.fn(async (lockfile) => {
@@ -287,11 +291,8 @@ function bumpOptions(): BumpOptions {
             }),
         },
         notes: ["No ticket required - general housekeeping"],
+        target: TARGET,
     };
-}
-
-function manifest(dependencies: Record<string, string>): string {
-    return `${JSON.stringify({ dependencies }, null, 2)}\n`;
 }
 
 function createRemote(name: string, files: Record<string, string>): OrgRepo {

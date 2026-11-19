@@ -46,6 +46,19 @@ type Comparison = {
     commits: CommitSummary[];
 };
 
+type CommitsTouchingOptions = {
+    directory: string;
+    head: string;
+    repo: GitHubRepo;
+    since: string;
+};
+
+type CompareOptions = {
+    base: string;
+    head: string;
+    repo: GitHubRepo;
+};
+
 type PullRequestOptions = {
     base: string;
     bodyFile: string;
@@ -117,11 +130,9 @@ class GitHub {
     }
 
     static async commitsTouching(
-        repo: GitHubRepo,
-        head: string,
-        directory: string,
-        since: string
+        options: CommitsTouchingOptions
     ): Promise<Set<string>> {
+        const { directory, head, repo, since } = options;
         const query = new URLSearchParams({
             path: directory,
             per_page: "100",
@@ -142,11 +153,8 @@ class GitHub {
         return new Set(compact(output.split("\n")));
     }
 
-    static async compareCommits(
-        repo: GitHubRepo,
-        base: string,
-        head: string
-    ): Promise<Comparison> {
+    static async compareCommits(options: CompareOptions): Promise<Comparison> {
+        const { base, head, repo } = options;
         const output = await Exec.run(
             "gh",
             [
@@ -249,10 +257,16 @@ class GitHub {
             "--yes",
         ]);
     }
+
+    static webUrl(repo: GitHubRepo): string {
+        return `https://${repo.host}/${repo.owner}/${repo.name}`;
+    }
 }
 
 export type {
+    CommitsTouchingOptions,
     CommitSummary,
+    CompareOptions,
     Comparison,
     GitHubRepo,
     OrgRepo,

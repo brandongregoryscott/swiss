@@ -16,6 +16,11 @@ type NpmFailure = {
     error?: { summary?: unknown };
 };
 
+type RepositoryFields = {
+    directory?: unknown;
+    url?: unknown;
+};
+
 type ViewedRelease = {
     gitHead?: unknown;
     repository?: unknown;
@@ -29,11 +34,7 @@ class NpmRegistry {
             "--json",
         ]);
         const viewed = JSON.parse(output) as ViewedRelease;
-        const repository = isString(viewed.repository)
-            ? { url: viewed.repository }
-            : isPlainObject(viewed.repository)
-              ? (viewed.repository as { directory?: unknown; url?: unknown })
-              : {};
+        const repository = repositoryFields(viewed.repository);
         return {
             directory: isString(repository.directory)
                 ? repository.directory
@@ -66,6 +67,13 @@ class NpmRegistry {
         }
         return version;
     }
+}
+
+function repositoryFields(repository: unknown): RepositoryFields {
+    if (isString(repository)) {
+        return { url: repository };
+    }
+    return isPlainObject(repository) ? (repository as RepositoryFields) : {};
 }
 
 function parseRepository(url: string): GitHubRepo | null {

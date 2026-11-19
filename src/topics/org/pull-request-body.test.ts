@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { ManifestBump } from "./manifests.js";
+import { fakeBump } from "./manifest-fixtures.js";
 import { PullRequestBody } from "./pull-request-body.js";
 
 const TARGET = { pkg: "@acme/cats", version: "1.4.0" };
@@ -33,7 +33,7 @@ describe("PullRequestBody", () => {
     describe("build", () => {
         it("summarizes a single root bump", () => {
             const result = PullRequestBody.build({
-                bumps: [bump()],
+                bumps: [fakeBump()],
                 changelog: null,
                 notes: [],
                 target: TARGET,
@@ -47,7 +47,7 @@ describe("PullRequestBody", () => {
 
         it("names the manifest for a single nested bump", () => {
             const result = PullRequestBody.build({
-                bumps: [bump({ path: "apps/web/package.json" })],
+                bumps: [fakeBump({ path: "apps/web/package.json" })],
                 changelog: null,
                 notes: [],
                 target: TARGET,
@@ -62,8 +62,8 @@ describe("PullRequestBody", () => {
         it("lists each manifest when several are bumped", () => {
             const result = PullRequestBody.build({
                 bumps: [
-                    bump({ path: "apps/api/package.json" }),
-                    bump({
+                    fakeBump({ path: "apps/api/package.json" }),
+                    fakeBump({
                         current: "1.0.0",
                         next: "1.4.0",
                         path: "apps/web/package.json",
@@ -88,7 +88,7 @@ describe("PullRequestBody", () => {
 
         it("adds each note as a paragraph after the summary", () => {
             const result = PullRequestBody.build({
-                bumps: [bump()],
+                bumps: [fakeBump()],
                 changelog: "- Add whiskers (#12)",
                 notes: [
                     "No ticket required - general housekeeping\n",
@@ -117,7 +117,7 @@ describe("PullRequestBody", () => {
 
         it("keeps the template and ticks only the technical docs box", () => {
             const result = PullRequestBody.build({
-                bumps: [bump()],
+                bumps: [fakeBump()],
                 changelog: "- Add whiskers (#12)",
                 notes: [],
                 target: TARGET,
@@ -216,15 +216,3 @@ describe("PullRequestBody", () => {
         });
     });
 });
-
-function bump(overrides: Partial<ManifestBump> = {}): ManifestBump {
-    return {
-        current: "^1.2.0",
-        currentVersion: "1.2.0",
-        next: "^1.4.0",
-        path: "package.json",
-        section: "dependencies",
-        status: "bump",
-        ...overrides,
-    };
-}

@@ -1,6 +1,7 @@
 import type { CommitSummary, GitHubRepo } from "../../shared/git/github.js";
 import { CommandError } from "../../shared/exec.js";
 import { GitHub } from "../../shared/git/github.js";
+import { PromiseCache } from "../../shared/promise-cache.js";
 import { NpmRegistry } from "./npm-registry.js";
 
 type ChangelogSource = (
@@ -32,16 +33,11 @@ class Changelog {
     static cached(
         source: ChangelogSource = Changelog.between
     ): ChangelogSource {
-        const changelogs = new Map<string, Promise<null | string>>();
-        return (pkg, from, to) => {
-            const key = `${pkg}@${from}...${to}`;
-            let changelog = changelogs.get(key);
-            if (changelog == null) {
-                changelog = source(pkg, from, to);
-                changelogs.set(key, changelog);
-            }
-            return changelog;
-        };
+        const changelogs = new PromiseCache<null | string>();
+        return (pkg, from, to) =>
+            changelogs.get(`${pkg}@${from}...${to}`, () =>
+                source(pkg, from, to)
+            );
     }
 
     static format(
@@ -52,7 +48,7 @@ class Changelog {
         if (commits.length === 0) {
             return `_No commits between these versions._ ([compare](${compareUrl}))`;
         }
-        const repoUrl = `https://${repo.host}/${repo.owner}/${repo.name}`;
+        const repoUrl = GitHub.webUrl(repo);
         const newestFirst = commits.toReversed();
         const lines = newestFirst.slice(0, MAX_LISTED_COMMITS).map((commit) => {
             const pullRequest = PULL_REQUEST_SUFFIX.exec(commit.subject)?.[1];
@@ -84,22 +80,22 @@ async function build(
         return null;
     }
 
-    const comparison = await GitHub.compareCommits(
+    const comparison = await GitHub.compareCommits({
+        base: base.gitHead,
+        head: head.gitHead,
         repo,
-        base.gitHead,
-        head.gitHead
-    );
+    });
     let { commits } = comparison;
     if (head.directory != null) {
-        const touching = await GitHub.commitsTouching(
+        const touching = await GitHub.commitsTouching({
+            directory: head.directory,
+            head: head.gitHead,
             repo,
-            head.gitHead,
-            head.directory,
-            comparison.baseDate
-        );
+            since: comparison.baseDate,
+        });
         commits = commits.filter((commit) => touching.has(commit.sha));
     }
-    const compareUrl = `https://${repo.host}/${repo.owner}/${repo.name}/compare/${base.gitHead}...${head.gitHead}`;
+    const compareUrl = `${GitHub.webUrl(repo)}/compare/${base.gitHead}...${head.gitHead}`;
     return Changelog.format(repo, commits, compareUrl);
 }
 

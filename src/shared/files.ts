@@ -1,10 +1,28 @@
 import { stat } from "node:fs/promises";
-import { UserError } from "./errors.js";
+import path from "node:path";
+import { nullIfMissing, UserError } from "./errors.js";
 import { Text } from "./text.js";
 
 class FileError extends UserError {}
 
 class Files {
+    static ancestors(rootDir: string, fromDir: string): string[] {
+        const dirs = [];
+        let dir = fromDir;
+        for (;;) {
+            dirs.push(dir);
+            const parent = path.dirname(dir);
+            if (path.relative(rootDir, dir) === "" || parent === dir) {
+                return dirs;
+            }
+            dir = parent;
+        }
+    }
+
+    static async exists(file: string): Promise<boolean> {
+        return (await stat(file).catch(nullIfMissing)) != null;
+    }
+
     // Whether dir is an existing directory. Not being able to read it counts as not, for warnings
     // and notes; use requireDirectory when it has to be one.
     static async isDirectory(dir: string): Promise<boolean> {

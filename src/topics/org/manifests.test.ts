@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ManifestBump } from "./manifests.js";
+import { fakeBump, fakeManifest } from "./manifest-fixtures.js";
 import { ManifestError, Manifests } from "./manifests.js";
 
 const TARGET = { pkg: "@acme/cats", version: "1.4.0" };
@@ -16,7 +16,7 @@ describe("Manifests", () => {
             for (const { current, next } of testCases) {
                 const result = Manifests.check(
                     "package.json",
-                    manifest({ dependencies: { "@acme/cats": current } }),
+                    fakeManifest({ dependencies: { "@acme/cats": current } }),
                     TARGET
                 );
 
@@ -36,7 +36,7 @@ describe("Manifests", () => {
         it("checks every dependency section that lists the package", () => {
             const result = Manifests.check(
                 "apps/web/package.json",
-                manifest({
+                fakeManifest({
                     dependencies: { "@acme/cats": "^1.0.0" },
                     devDependencies: { "@acme/cats": "1.4.0" },
                     peerDependencies: { "@acme/cats": "^1.0.0" },
@@ -77,7 +77,7 @@ describe("Manifests", () => {
             for (const { reason, spec } of testCases) {
                 const result = Manifests.check(
                     "package.json",
-                    manifest({ dependencies: { "@acme/cats": spec } }),
+                    fakeManifest({ dependencies: { "@acme/cats": spec } }),
                     TARGET
                 );
 
@@ -102,7 +102,7 @@ describe("Manifests", () => {
         it("ignores a manifest that only mentions the package by name", () => {
             const result = Manifests.check(
                 "package.json",
-                manifest({ name: "@acme/cats" }),
+                fakeManifest({ name: "@acme/cats" }),
                 TARGET
             );
 
@@ -113,8 +113,8 @@ describe("Manifests", () => {
     describe("oldestVersion", () => {
         it("picks the lowest current version by semver", () => {
             const result = Manifests.oldestVersion([
-                bump({ currentVersion: "0.10.0" }),
-                bump({ currentVersion: "0.9.1" }),
+                fakeBump({ currentVersion: "0.10.0" }),
+                fakeBump({ currentVersion: "0.9.1" }),
             ]);
 
             expect(result).toBe("0.9.1");
@@ -138,7 +138,7 @@ describe("Manifests", () => {
             ].join("\n");
 
             const result = Manifests.rewrite(text, "@acme/cats", [
-                bump({ current: "^1.2.0", next: "^1.4.0" }),
+                fakeBump({ current: "^1.2.0", next: "^1.4.0" }),
             ]);
 
             expect(result).toBe(
@@ -150,15 +150,15 @@ describe("Manifests", () => {
         });
 
         it("rewrites every bumped section", () => {
-            const text = manifest({
+            const text = fakeManifest({
                 dependencies: { "@acme/cats": "1.2.0" },
                 devDependencies: { "@acme/cats": "~1.3.0" },
             });
 
             const result = JSON.parse(
                 Manifests.rewrite(text, "@acme/cats", [
-                    bump({ current: "1.2.0", next: "1.4.0" }),
-                    bump({
+                    fakeBump({ current: "1.2.0", next: "1.4.0" }),
+                    fakeBump({
                         current: "~1.3.0",
                         next: "~1.4.0",
                         section: "devDependencies",
@@ -173,27 +173,13 @@ describe("Manifests", () => {
         });
 
         it("refuses when the spec isn't where the bump expects it", () => {
-            const text = manifest({ dependencies: { "@acme/cats": "1.3.0" } });
+            const text = fakeManifest({
+                dependencies: { "@acme/cats": "1.3.0" },
+            });
 
             expect(() =>
-                Manifests.rewrite(text, "@acme/cats", [bump()])
+                Manifests.rewrite(text, "@acme/cats", [fakeBump()])
             ).toThrow(ManifestError);
         });
     });
 });
-
-function manifest(fields: Record<string, unknown>): string {
-    return `${JSON.stringify(fields, null, 2)}\n`;
-}
-
-function bump(overrides: Partial<ManifestBump> = {}): ManifestBump {
-    return {
-        current: "^1.2.0",
-        currentVersion: "1.2.0",
-        next: "^1.4.0",
-        path: "package.json",
-        section: "dependencies",
-        status: "bump",
-        ...overrides,
-    };
-}

@@ -34,9 +34,11 @@ type BumpOutcome = { status: "opened"; url: string } | Failure;
 
 type BumpOptions = {
     changelog: ChangelogSource;
+    config: OrgConfig;
     draft: boolean;
     lockfiles: LockfileUpdater;
     notes: string[];
+    target: Target;
 };
 
 const NO_HOOKS = ["-c", "core.hooksPath=/dev/null"];
@@ -45,11 +47,10 @@ class PackageBump {
     static async apply(
         repo: OrgRepo,
         plan: ScannedPlan,
-        target: Target,
-        config: OrgConfig,
         options: BumpOptions
     ): Promise<BumpOutcome> {
         return settle(async () => {
+            const { config, target } = options;
             const bumps = PackageBump.bumps(plan);
             const tempDir = await mkdtemp(path.join(tmpdir(), "swiss-bump-"));
             const worktreeDir = path.join(tempDir, repo.name);

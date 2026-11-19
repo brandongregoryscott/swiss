@@ -173,9 +173,11 @@ Repos are scanned from the org's clones under rootDir; run \`<%= config.bin %> o
         this.log("");
         const options = {
             changelog: Changelog.cached(),
+            config,
             draft: flags.draft,
             lockfiles: new Lockfiles(),
             notes: flags.note ?? [],
+            target,
         };
         const nameWidth = Math.max(
             ...planned.map(({ repo }) => repo.name.length)
@@ -183,8 +185,7 @@ Repos are scanned from the org's clones under rootDir; run \`<%= config.bin %> o
         await Concurrency.inOrder(
             planned,
             flags.concurrency,
-            ({ plan, repo }) =>
-                PackageBump.apply(repo, plan, target, config, options),
+            ({ plan, repo }) => PackageBump.apply(repo, plan, options),
             (outcome, { repo }) => {
                 const name = repo.name.padEnd(nameWidth);
                 if (outcome.status === "error") {
