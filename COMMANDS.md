@@ -61,6 +61,7 @@
 - [`swiss note list [SEARCH]`](#swiss-note-list-search)
 - [`swiss note remove [NOTE...] [-a] [-y]`](#swiss-note-remove-note--a--y)
 - [`swiss org branches`](#swiss-org-branches)
+- [`swiss org bump PACKAGE`](#swiss-org-bump-package)
 - [`swiss org config`](#swiss-org-config)
 - [`swiss org sync`](#swiss-org-sync)
 - [`swiss port [PORT]`](#swiss-port-port)
@@ -2145,6 +2146,63 @@ EXAMPLES
   Pick which branches to delete from a list
 
     $ swiss org branches --pick
+```
+
+## `swiss org bump PACKAGE`
+
+Open a pull request in every cloned repo in the org that depends on an npm package, bumping it to a new version.
+
+```
+USAGE
+  $ swiss org bump PACKAGE [-c <value>] [--draft] [--dry-run] [-r <value>...] [--to <value>] [-y]
+
+ARGUMENTS
+  PACKAGE  The npm package to bump, like @acme/ui
+
+FLAGS
+  -c, --concurrency=<value>  [default: 4] Number of repos to scan or bump at once
+  -r, --repo=<value>...      Only bump repos whose name matches this glob, ignoring case; can be given more than once
+  -y, --yes                  Open the pull requests without asking first
+      --[no-]draft           Open draft pull requests
+      --dry-run              List what would be bumped without changing anything (repos are still fetched)
+      --to=<value>           [default: latest] The version to bump to, or a dist-tag or range to resolve to one
+
+DESCRIPTION
+  Open a pull request in every cloned repo in the org that depends on an npm package, bumping it to a new version.
+
+  Every package.json on each repo's default branch is checked, so it finds the package at the root of a repo and in
+  nested apps and packages of a monorepo, like apps/web and apps/api. Exact versions and ^ or ~ ranges are bumped,
+  keeping their ^ or ~. Other specs, like workspace:* or a git URL, are listed as skipped, as are versions newer than
+  the one being bumped to.
+
+  For each repo, a temporary worktree is made from origin's default branch, so your checkout is never touched. In it:
+
+  - Each package.json is changed in place, keeping its formatting.
+  - The nearest lockfile is updated without installing node_modules or running scripts, using the Node version from the
+  nearest .nvmrc, .node-version or .tool-versions through nvm, which installs that version if it's missing. npm, pnpm
+  and bun lockfiles are supported.
+  - The change is committed, skipping git hooks, and pushed to a bump/<package>-<version> branch. A repo where that
+  branch is already on origin is skipped.
+
+  The pull request is assigned to you, and its description says what was bumped, lists the package's commits between the
+  versions when the registry links them to a GitHub repo, and then has the repo's pull request template, with its
+  technical docs checkbox ticked.
+
+  Repos are scanned from the org's clones under rootDir; run `swiss org sync` first to clone missing ones and fetch the
+  rest. Uses the same "org" settings as `org sync`; see `swiss org sync --help`.
+
+EXAMPLES
+  List the repos and package.json files that would be bumped to the latest version
+
+    $ swiss org bump @acme/ui --dry-run
+
+  Bump to a specific version
+
+    $ swiss org bump @acme/ui --to 2.3.0
+
+  Only bump some repos, and open ready-for-review pull requests
+
+    $ swiss org bump @acme/analytics --repo 'web*' --repo api --no-draft
 ```
 
 ## `swiss org config`

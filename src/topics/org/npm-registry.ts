@@ -1,0 +1,84 @@
+import { isArray, isPlainObject, isString, last } from "lodash-es";
+import type { GitHubRepo } from "../../shared/git/github.js";
+import { UserError } from "../../shared/errors.js";
+import { Exec } from "../../shared/exec.js";
+import { Git } from "../../shared/git/git.js";
+
+class NpmRegistryError extends UserError {}
+
+type Release = {
+    directory: null | string;
+    gitHead: null | string;
+    repo: GitHubRepo | null;
+};
+
+type NpmFailure = {
+    error?: { summary?: unknown };
+};
+
+type ViewedRelease = {
+    gitHead?: unknown;
+    repository?: unknown;
+};
+
+class NpmRegistry {
+    static async release(pkg: string, version: string): Promise<Release> {
+        const output = await Exec.run("npm", [
+            "view",
+            `${pkg}@${version}`,
+            "--json",
+        ]);
+        const viewed = JSON.parse(output) as ViewedRelease;
+        const repository = isString(viewed.repository)
+            ? { url: viewed.repository }
+            : isPlainObject(viewed.repository)
+              ? (viewed.repository as { directory?: unknown; url?: unknown })
+              : {};
+        return {
+            directory: isString(repository.directory)
+                ? repository.directory
+                : null,
+            gitHead: isString(viewed.gitHead) ? viewed.gitHead : null,
+            repo: isString(repository.url)
+                ? parseRepository(repository.url)
+                : null,
+        };
+    }
+
+    static async resolveVersion(pkg: string, spec = "latest"): Promise<string> {
+        const output = await Exec.run(
+            "npm",
+            ["view", `${pkg}@${spec}`, "version", "--json"],
+            { okExitCodes: [1] }
+        );
+        const parsed: unknown = output === "" ? null : JSON.parse(output);
+        const failure = (parsed as NpmFailure | null)?.error?.summary;
+        if (isString(failure)) {
+            throw new NpmRegistryError(
+                `Couldn't look up ${pkg}@${spec}: ${failure}`
+            );
+        }
+        const version = isArray(parsed) ? last(parsed) : parsed;
+        if (!isString(version)) {
+            throw new NpmRegistryError(
+                `No published version of ${pkg} matches ${spec}`
+            );
+        }
+        return version;
+    }
+}
+
+function parseRepository(url: string): GitHubRepo | null {
+    const shorthand = /^(?:github:)?([\w.-]+)\/([\w.-]+)$/.exec(url);
+    if (shorthand != null) {
+        return {
+            host: "github.com",
+            name: shorthand[2]!,
+            owner: shorthand[1]!,
+        };
+    }
+    return Git.parseRemoteUrl(url.replace(/^git\+/, ""));
+}
+
+export type { Release };
+export { NpmRegistry, NpmRegistryError };
