@@ -86,12 +86,12 @@ async function build(
         repo,
     });
     let { commits } = comparison;
-    if (head.directory != null) {
+    if (head.directory != null && comparison.earliestDate != null) {
         const touching = await GitHub.commitsTouching({
             directory: head.directory,
             head: head.gitHead,
             repo,
-            since: comparison.baseDate,
+            since: comparison.earliestDate,
         });
         commits = commits.filter((commit) => touching.has(commit.sha));
     }

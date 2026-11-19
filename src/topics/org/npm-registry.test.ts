@@ -17,12 +17,11 @@ describe("NpmRegistry", () => {
         });
 
         it("takes the highest version a range matches", async () => {
-            vi.spyOn(Exec, "run").mockResolvedValue('["1.3.0", "1.3.2"]\n');
-
-            const result = await NpmRegistry.resolveVersion(
-                "@acme/cats",
-                "1.3"
+            vi.spyOn(Exec, "run").mockResolvedValue(
+                '["1.3.0", "1.3.2", "1.2.5"]\n'
             );
+
+            const result = await NpmRegistry.resolveVersion("@acme/cats", "^1");
 
             expect(result).toBe("1.3.2");
         });
@@ -76,6 +75,18 @@ describe("NpmRegistry", () => {
                 directory: "packages/cats",
                 gitHead: "abc123",
                 repo: { host: "github.com", name: "monorepo", owner: "acme" },
+            });
+        });
+
+        it("returns an empty release when npm prints nothing", async () => {
+            vi.spyOn(Exec, "run").mockResolvedValue("\n");
+
+            const result = await NpmRegistry.release("@acme/cats", "1.4.0");
+
+            expect(result).toEqual({
+                directory: null,
+                gitHead: null,
+                repo: null,
             });
         });
 

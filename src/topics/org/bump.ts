@@ -65,8 +65,23 @@ class PackageBump {
                 `origin/${plan.defaultBranch}`
             );
             try {
-                await bumpWorktree(worktreeDir, bumps, target, options);
+                await bumpWorktree(worktreeDir, bumps, options);
                 const title = PackageBump.title(target);
+                const bodyFile = path.join(tempDir, "body.md");
+                await writeFile(
+                    bodyFile,
+                    PullRequestBody.build({
+                        bumps,
+                        changelog: await options.changelog(
+                            target.pkg,
+                            Manifests.oldestVersion(bumps),
+                            target.version
+                        ),
+                        notes: options.notes,
+                        target,
+                        template: await PullRequestBody.template(worktreeDir),
+                    })
+                );
                 await Git.run(worktreeDir, "add", "--update");
                 await Git.run(
                     worktreeDir,
@@ -85,21 +100,6 @@ class PackageBump {
                     `HEAD:refs/heads/${plan.branch}`
                 );
 
-                const bodyFile = path.join(tempDir, "body.md");
-                await writeFile(
-                    bodyFile,
-                    PullRequestBody.build({
-                        bumps,
-                        changelog: await options.changelog(
-                            target.pkg,
-                            Manifests.oldestVersion(bumps),
-                            target.version
-                        ),
-                        notes: options.notes,
-                        target,
-                        template: await PullRequestBody.template(worktreeDir),
-                    })
-                );
                 const url = await GitHub.createPullRequest({
                     base: plan.defaultBranch,
                     bodyFile,
@@ -111,6 +111,17 @@ class PackageBump {
                         owner: config.name,
                     },
                     title,
+                }).catch(async (error: unknown) => {
+                    await Git.run(
+                        worktreeDir,
+                        ...NO_HOOKS,
+                        "push",
+                        "--quiet",
+                        "origin",
+                        "--delete",
+                        plan.branch
+                    ).catch(() => {});
+                    throw error;
                 });
                 return { status: "opened", url };
             } finally {
@@ -184,7 +195,6 @@ class PackageBump {
 async function bumpWorktree(
     worktreeDir: string,
     bumps: ManifestBump[],
-    target: Target,
     options: BumpOptions
 ): Promise<void> {
     const lockfiles: Lockfile[] = [];
@@ -195,7 +205,7 @@ async function bumpWorktree(
         const text = await readFile(manifestPath, "utf8");
         await writeFile(
             manifestPath,
-            Manifests.rewrite(text, target.pkg, fileBumps)
+            Manifests.rewrite(text, options.target.pkg, fileBumps)
         );
         const lockfile = await Lockfiles.find(
             worktreeDir,

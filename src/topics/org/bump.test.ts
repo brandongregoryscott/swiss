@@ -22,10 +22,11 @@ import {
 import type { OrgConfig } from "../../shared/config/org-config.js";
 import type { OrgRepo } from "../../shared/git/github.js";
 import type { BumpOptions, ScannedPlan } from "./bump.js";
+import { CommandError } from "../../shared/exec.js";
 import { GitHub } from "../../shared/git/github.js";
 import { PackageBump } from "./bump.js";
 import { LockfileError } from "./lockfiles.js";
-import { fakeManifest } from "./manifest-fixtures.js";
+import { fakeManifest } from "./manifest.fixtures.js";
 
 const ORG = "acme";
 
@@ -248,6 +249,28 @@ describe("PackageBump", () => {
                 status: "error",
             });
             expect(createPullRequest).not.toHaveBeenCalled();
+            expect(git(repo.sshUrl, "branch", "--list", BRANCH)).toBe("");
+            expect(worktrees(localDir)).toEqual([realpathSync(localDir)]);
+        });
+
+        it("deletes the pushed branch when the pull request can't be opened", async () => {
+            const repo = createRemote("widget", {
+                "package.json": fakeManifest({
+                    dependencies: { "@acme/cats": "^1.2.0" },
+                }),
+            });
+            const localDir = cloneLocal(repo);
+            const plan = await scannedPlan(repo);
+            vi.spyOn(GitHub, "createPullRequest").mockRejectedValue(
+                new CommandError("gh pr create failed")
+            );
+
+            const result = await PackageBump.apply(repo, plan, bumpOptions());
+
+            expect(result).toEqual({
+                reason: "gh pr create failed",
+                status: "error",
+            });
             expect(git(repo.sshUrl, "branch", "--list", BRANCH)).toBe("");
             expect(worktrees(localDir)).toEqual([realpathSync(localDir)]);
         });

@@ -42,8 +42,8 @@ type CommitSummary = {
 };
 
 type Comparison = {
-    baseDate: string;
     commits: CommitSummary[];
+    earliestDate: null | string;
 };
 
 type CommitsTouchingOptions = {
@@ -161,7 +161,7 @@ class GitHub {
                 "api",
                 `repos/${repo.owner}/${repo.name}/compare/${base}...${head}`,
                 "--jq",
-                '{baseDate: .base_commit.commit.committer.date, commits: [.commits[] | {sha, subject: (.commit.message | split("\\n")[0])}]}',
+                '{commits: [.commits[] | {sha, subject: (.commit.message | split("\\n")[0])}], earliestDate: ([.commits[].commit.committer.date] | min)}',
             ],
             { env: { GH_HOST: repo.host } }
         );

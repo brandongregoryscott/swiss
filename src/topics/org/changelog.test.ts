@@ -1,11 +1,60 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { GitHub } from "../../shared/git/github.js";
 import { Changelog } from "./changelog.js";
+import { NpmRegistry } from "./npm-registry.js";
 
 const REPO = { host: "github.com", name: "cats", owner: "acme" };
 
 const COMPARE_URL = "https://github.com/acme/cats/compare/aaa...bbb";
 
+afterEach(() => {
+    vi.restoreAllMocks();
+});
+
 describe("Changelog", () => {
+    describe("between", () => {
+        it("keeps only commits touching the package's directory since the earliest compared commit", async () => {
+            vi.spyOn(NpmRegistry, "release").mockImplementation(
+                (_pkg, version) =>
+                    Promise.resolve({
+                        directory: "packages/cats",
+                        gitHead: version === "1.0.0" ? "aaa" : "bbb",
+                        repo: REPO,
+                    })
+            );
+            vi.spyOn(GitHub, "compareCommits").mockResolvedValue({
+                commits: [
+                    { sha: "c1", subject: "feat: add whiskers" },
+                    { sha: "c2", subject: "chore: touch dogs" },
+                ],
+                earliestDate: "2024-01-01T00:00:00Z",
+            });
+            const commitsTouching = vi
+                .spyOn(GitHub, "commitsTouching")
+                .mockResolvedValue(new Set(["c1"]));
+
+            const result = await Changelog.between(
+                "@acme/cats",
+                "1.0.0",
+                "1.4.0"
+            );
+
+            expect(commitsTouching).toHaveBeenCalledWith({
+                directory: "packages/cats",
+                head: "bbb",
+                repo: REPO,
+                since: "2024-01-01T00:00:00Z",
+            });
+            expect(result).toBe(
+                [
+                    "- feat: add whiskers ([`c1`](https://github.com/acme/cats/commit/c1))",
+                    "",
+                    `[Full comparison](${COMPARE_URL})`,
+                ].join("\n")
+            );
+        });
+    });
+
     describe("format", () => {
         it("lists commits newest first, linking pull requests or commits", () => {
             const result = Changelog.format(

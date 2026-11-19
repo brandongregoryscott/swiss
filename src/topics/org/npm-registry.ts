@@ -1,4 +1,5 @@
-import { isArray, isPlainObject, isString, last } from "lodash-es";
+import { isArray, isPlainObject, isString } from "lodash-es";
+import semver from "semver";
 import type { GitHubRepo } from "../../shared/git/github.js";
 import { UserError } from "../../shared/errors.js";
 import { Exec } from "../../shared/exec.js";
@@ -33,7 +34,12 @@ class NpmRegistry {
             `${pkg}@${version}`,
             "--json",
         ]);
-        const viewed = JSON.parse(output) as ViewedRelease;
+        const parsed: unknown =
+            output.trim() === "" ? null : JSON.parse(output);
+        if (!isPlainObject(parsed)) {
+            return { directory: null, gitHead: null, repo: null };
+        }
+        const viewed = parsed as ViewedRelease;
         const repository = repositoryFields(viewed.repository);
         return {
             directory: isString(repository.directory)
@@ -59,7 +65,9 @@ class NpmRegistry {
                 `Couldn't look up ${pkg}@${spec}: ${failure}`
             );
         }
-        const version = isArray(parsed) ? last(parsed) : parsed;
+        const version: unknown = isArray(parsed)
+            ? semver.rsort(parsed.filter(isString))[0]
+            : parsed;
         if (!isString(version)) {
             throw new NpmRegistryError(
                 `No published version of ${pkg} matches ${spec}`

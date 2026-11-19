@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fakeBump, fakeManifest } from "./manifest-fixtures.js";
+import { fakeBump, fakeManifest } from "./manifest.fixtures.js";
 import { ManifestError, Manifests } from "./manifests.js";
 
 const TARGET = { pkg: "@acme/cats", version: "1.4.0" };
