@@ -2154,13 +2154,16 @@ Open a pull request in every cloned repo in the org that depends on an npm packa
 
 ```
 USAGE
-  $ swiss org bump PACKAGE [-c <value>] [--draft] [--dry-run] [-r <value>...] [--to <value>] [-y]
+  $ swiss org bump PACKAGE [-c <value>] [--draft] [--dry-run] [-n <value>...] [-r <value>...] [--to <value>]
+    [-y]
 
 ARGUMENTS
   PACKAGE  The npm package to bump, like @acme/ui
 
 FLAGS
   -c, --concurrency=<value>  [default: 4] Number of repos to scan or bump at once
+  -n, --note=<value>...      A paragraph to add to each pull request's description, after the summary; can be given more
+                             than once
   -r, --repo=<value>...      Only bump repos whose name matches this glob, ignoring case; can be given more than once
   -y, --yes                  Open the pull requests without asking first
       --[no-]draft           Open draft pull requests
@@ -2184,9 +2187,9 @@ DESCRIPTION
   - The change is committed, skipping git hooks, and pushed to a bump/<package>-<version> branch. A repo where that
   branch is already on origin is skipped.
 
-  The pull request is assigned to you, and its description says what was bumped, lists the package's commits between the
-  versions when the registry links them to a GitHub repo, and then has the repo's pull request template, with its
-  technical docs checkbox ticked.
+  The pull request is assigned to you, and its description says what was bumped, then has any --note paragraphs, lists
+  the package's commits between the versions when the registry links them to a GitHub repo, and then has the repo's pull
+  request template, with its technical docs checkbox ticked.
 
   Repos are scanned from the org's clones under rootDir; run `swiss org sync` first to clone missing ones and fetch the
   rest. Uses the same "org" settings as `org sync`; see `swiss org sync --help`.
@@ -2203,6 +2206,10 @@ EXAMPLES
   Only bump some repos, and open ready-for-review pull requests
 
     $ swiss org bump @acme/analytics --repo 'web*' --repo api --no-draft
+
+  Add a line to each pull request's description, like a repo's no-ticket override
+
+    $ swiss org bump @acme/ui --note 'No ticket required - general housekeeping, bumping every consumer'
 ```
 
 ## `swiss org config`

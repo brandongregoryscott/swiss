@@ -35,6 +35,7 @@ describe("PullRequestBody", () => {
             const result = PullRequestBody.build({
                 bumps: [bump()],
                 changelog: null,
+                notes: [],
                 target: TARGET,
                 template: null,
             });
@@ -48,6 +49,7 @@ describe("PullRequestBody", () => {
             const result = PullRequestBody.build({
                 bumps: [bump({ path: "apps/web/package.json" })],
                 changelog: null,
+                notes: [],
                 target: TARGET,
                 template: null,
             });
@@ -68,6 +70,7 @@ describe("PullRequestBody", () => {
                     }),
                 ],
                 changelog: null,
+                notes: [],
                 target: TARGET,
                 template: null,
             });
@@ -83,10 +86,40 @@ describe("PullRequestBody", () => {
             );
         });
 
+        it("adds each note as a paragraph after the summary", () => {
+            const result = PullRequestBody.build({
+                bumps: [bump()],
+                changelog: "- Add whiskers (#12)",
+                notes: [
+                    "No ticket required - general housekeeping\n",
+                    " ",
+                    "Bumping every consumer",
+                ],
+                target: TARGET,
+                template: null,
+            });
+
+            expect(result).toBe(
+                [
+                    "Bumps `@acme/cats` from `^1.2.0` to `^1.4.0`.",
+                    "",
+                    "No ticket required - general housekeeping",
+                    "",
+                    "Bumping every consumer",
+                    "",
+                    "## Changelog",
+                    "",
+                    "- Add whiskers (#12)",
+                    "",
+                ].join("\n")
+            );
+        });
+
         it("keeps the template and ticks only the technical docs box", () => {
             const result = PullRequestBody.build({
                 bumps: [bump()],
                 changelog: "- Add whiskers (#12)",
+                notes: [],
                 target: TARGET,
                 template: TEMPLATE,
             });

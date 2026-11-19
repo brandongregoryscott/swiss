@@ -6,6 +6,7 @@ import { nullIfMissing } from "../../shared/errors.js";
 type BodyOptions = {
     bumps: ManifestBump[];
     changelog: null | string;
+    notes: string[];
     target: Target;
     template: null | string;
 };
@@ -20,8 +21,11 @@ const TECHNICAL_DOCS_CHECKBOX = /^(\s*[-*] )\[ \](.*technical docs)/gim;
 
 class PullRequestBody {
     static build(options: BodyOptions): string {
-        const { bumps, changelog, target, template } = options;
-        const sections = [summarize(target, bumps)];
+        const { bumps, changelog, notes, target, template } = options;
+        const sections = [
+            summarize(target, bumps),
+            ...notes.map((note) => note.trim()).filter((note) => note !== ""),
+        ];
         if (changelog != null) {
             sections.push(`## Changelog\n\n${changelog}`);
         }

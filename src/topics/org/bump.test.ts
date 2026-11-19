@@ -201,6 +201,8 @@ describe("PackageBump", () => {
                 [
                     "Bumps `@acme/cats` from `^1.2.0` to `^1.4.0`.",
                     "",
+                    "No ticket required - general housekeeping",
+                    "",
                     "## Changelog",
                     "",
                     "- feat: add whiskers",
@@ -284,6 +286,7 @@ function bumpOptions(): BumpOptions {
                 );
             }),
         },
+        notes: ["No ticket required - general housekeeping"],
     };
 }
 

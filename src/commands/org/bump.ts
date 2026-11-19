@@ -39,7 +39,7 @@ For each repo, a temporary worktree is made from origin's default branch, so you
   - The nearest lockfile is updated without installing node_modules or running scripts, using the Node version from the nearest .nvmrc, .node-version or .tool-versions through nvm, which installs that version if it's missing. npm, pnpm and bun lockfiles are supported.
   - The change is committed, skipping git hooks, and pushed to a bump/<package>-<version> branch. A repo where that branch is already on origin is skipped.
 
-The pull request is assigned to you, and its description says what was bumped, lists the package's commits between the versions when the registry links them to a GitHub repo, and then has the repo's pull request template, with its technical docs checkbox ticked.
+The pull request is assigned to you, and its description says what was bumped, then has any --note paragraphs, lists the package's commits between the versions when the registry links them to a GitHub repo, and then has the repo's pull request template, with its technical docs checkbox ticked.
 
 Repos are scanned from the org's clones under rootDir; run \`<%= config.bin %> org sync\` first to clone missing ones and fetch the rest. Uses the same "${OrgConfigSection.NAME}" settings as \`org sync\`; see \`<%= config.bin %> org sync --help\`.`;
 
@@ -59,6 +59,12 @@ Repos are scanned from the org's clones under rootDir; run \`<%= config.bin %> o
             description:
                 "Only bump some repos, and open ready-for-review pull requests",
         },
+        {
+            command:
+                "<%= config.bin %> <%= command.id %> @acme/ui --note 'No ticket required - general housekeeping, bumping every consumer'",
+            description:
+                "Add a line to each pull request's description, like a repo's no-ticket override",
+        },
     ];
 
     static override flags = {
@@ -76,6 +82,12 @@ Repos are scanned from the org's clones under rootDir; run \`<%= config.bin %> o
         "dry-run": Flags.boolean({
             description:
                 "List what would be bumped without changing anything (repos are still fetched)",
+        }),
+        note: Flags.string({
+            char: "n",
+            description:
+                "A paragraph to add to each pull request's description, after the summary; can be given more than once",
+            multiple: true,
         }),
         repo: Flags.string({
             char: "r",
@@ -163,6 +175,7 @@ Repos are scanned from the org's clones under rootDir; run \`<%= config.bin %> o
             changelog: Changelog.cached(),
             draft: flags.draft,
             lockfiles: new Lockfiles(),
+            notes: flags.note ?? [],
         };
         const nameWidth = Math.max(
             ...planned.map(({ repo }) => repo.name.length)

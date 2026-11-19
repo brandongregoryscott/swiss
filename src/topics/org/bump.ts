@@ -36,6 +36,7 @@ type BumpOptions = {
     changelog: ChangelogSource;
     draft: boolean;
     lockfiles: LockfileUpdater;
+    notes: string[];
 };
 
 const NO_HOOKS = ["-c", "core.hooksPath=/dev/null"];
@@ -93,6 +94,7 @@ class PackageBump {
                             Manifests.oldestVersion(bumps),
                             target.version
                         ),
+                        notes: options.notes,
                         target,
                         template: await PullRequestBody.template(worktreeDir),
                     })
