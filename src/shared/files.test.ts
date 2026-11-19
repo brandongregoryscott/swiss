@@ -29,4 +29,27 @@ describe("Files", () => {
         expect(await Files.isDirectory(dir)).toBe(true);
         expect(await Files.isDirectory(file)).toBe(false);
     });
+
+    it("lists the directories from one up to the root", () => {
+        const result = Files.ancestors("/repo", "/repo/apps/web");
+
+        expect(result).toEqual(["/repo/apps/web", "/repo/apps", "/repo"]);
+    });
+
+    it("stops at the filesystem root when the start isn't under the root", () => {
+        const result = Files.ancestors("/repo", "/elsewhere");
+
+        expect(result).toEqual(["/elsewhere", "/"]);
+    });
+
+    it("says whether a file exists", async () => {
+        expect(await Files.exists(path.join(dir, "README.md"))).toBe(true);
+        expect(await Files.exists(path.join(dir, "missing"))).toBe(false);
+    });
+
+    it("throws errors other than a missing file", async () => {
+        const result = Files.exists(path.join(dir, "README.md", "child"));
+
+        await expect(result).rejects.toThrow("ENOTDIR");
+    });
 });

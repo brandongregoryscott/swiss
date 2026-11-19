@@ -1,4 +1,4 @@
-import { chunk, isArray } from "lodash-es";
+import { chunk, compact, isArray } from "lodash-es";
 import { CommandError, Exec } from "../exec.js";
 
 type OrgRepo = {
@@ -34,6 +34,38 @@ type GhRepo = {
     name: string;
     sshUrl: string;
     url: string;
+};
+
+type CommitSummary = {
+    sha: string;
+    subject: string;
+};
+
+type Comparison = {
+    commits: CommitSummary[];
+    earliestDate: null | string;
+};
+
+type CommitsTouchingOptions = {
+    directory: string;
+    head: string;
+    repo: GitHubRepo;
+    since: string;
+};
+
+type CompareOptions = {
+    base: string;
+    head: string;
+    repo: GitHubRepo;
+};
+
+type PullRequestOptions = {
+    base: string;
+    bodyFile: string;
+    draft: boolean;
+    head: string;
+    repo: GitHubRepo;
+    title: string;
 };
 
 // Commits looked up per GraphQL request, well under GitHub's node limit.
@@ -95,6 +127,72 @@ class GitHub {
             }
         }
         return logins;
+    }
+
+    static async commitsTouching(
+        options: CommitsTouchingOptions
+    ): Promise<Set<string>> {
+        const { directory, head, repo, since } = options;
+        const query = new URLSearchParams({
+            path: directory,
+            per_page: "100",
+            sha: head,
+            since,
+        });
+        const output = await Exec.run(
+            "gh",
+            [
+                "api",
+                "--paginate",
+                `repos/${repo.owner}/${repo.name}/commits?${query.toString()}`,
+                "--jq",
+                ".[].sha",
+            ],
+            { env: { GH_HOST: repo.host } }
+        );
+        return new Set(compact(output.split("\n")));
+    }
+
+    static async compareCommits(options: CompareOptions): Promise<Comparison> {
+        const { base, head, repo } = options;
+        const output = await Exec.run(
+            "gh",
+            [
+                "api",
+                `repos/${repo.owner}/${repo.name}/compare/${base}...${head}`,
+                "--jq",
+                '{commits: [.commits[] | {sha, subject: (.commit.message | split("\\n")[0])}], earliestDate: ([.commits[].commit.committer.date] | min)}',
+            ],
+            { env: { GH_HOST: repo.host } }
+        );
+        return JSON.parse(output) as Comparison;
+    }
+
+    static async createPullRequest(
+        options: PullRequestOptions
+    ): Promise<string> {
+        const { repo } = options;
+        return Exec.run(
+            "gh",
+            [
+                "pr",
+                "create",
+                "--repo",
+                `${repo.owner}/${repo.name}`,
+                "--base",
+                options.base,
+                "--head",
+                options.head,
+                "--title",
+                options.title,
+                "--body-file",
+                options.bodyFile,
+                "--assignee",
+                "@me",
+                ...(options.draft ? ["--draft"] : []),
+            ],
+            { env: { GH_HOST: repo.host } }
+        );
     }
 
     static async listOrgRepos(
@@ -159,7 +257,20 @@ class GitHub {
             "--yes",
         ]);
     }
+
+    static webUrl(repo: GitHubRepo): string {
+        return `https://${repo.host}/${repo.owner}/${repo.name}`;
+    }
 }
 
-export type { GitHubRepo, OrgRepo, OwnedRepo };
+export type {
+    CommitsTouchingOptions,
+    CommitSummary,
+    CompareOptions,
+    Comparison,
+    GitHubRepo,
+    OrgRepo,
+    OwnedRepo,
+    PullRequestOptions,
+};
 export { GitHub };
