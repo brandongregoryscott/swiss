@@ -1,3 +1,4 @@
+import { uniq } from "lodash-es";
 import type { CommitSummary, GitHubRepo } from "../../shared/git/github.js";
 import { CommandError } from "../../shared/exec.js";
 import { GitHub } from "../../shared/git/github.js";
@@ -76,27 +77,58 @@ async function build(
         NpmRegistry.release(pkg, to),
     ]);
     const { repo } = head;
-    if (repo == null || base.gitHead == null || head.gitHead == null) {
+    if (repo == null) {
+        return null;
+    }
+    const [baseSha, headSha] = await Promise.all([
+        base.gitHead ?? taggedCommit(repo, pkg, from),
+        head.gitHead ?? taggedCommit(repo, pkg, to),
+    ]);
+    if (baseSha == null || headSha == null) {
         return null;
     }
 
     const comparison = await GitHub.compareCommits({
-        base: base.gitHead,
-        head: head.gitHead,
+        base: baseSha,
+        head: headSha,
         repo,
     });
     let { commits } = comparison;
     if (head.directory != null && comparison.earliestDate != null) {
         const touching = await GitHub.commitsTouching({
             directory: head.directory,
-            head: head.gitHead,
+            head: headSha,
             repo,
             since: comparison.earliestDate,
         });
         commits = commits.filter((commit) => touching.has(commit.sha));
     }
-    const compareUrl = `${GitHub.webUrl(repo)}/compare/${base.gitHead}...${head.gitHead}`;
+    const compareUrl = `${GitHub.webUrl(repo)}/compare/${baseSha}...${headSha}`;
     return Changelog.format(repo, commits, compareUrl);
+}
+
+async function taggedCommit(
+    repo: GitHubRepo,
+    pkg: string,
+    version: string
+): Promise<null | string> {
+    const unscoped = pkg.replace(/^@[^/]+\//, "");
+    const tags = uniq([
+        `${pkg}@${version}`,
+        `${unscoped}@${version}`,
+        `v${version}`,
+        version,
+    ]);
+    for (const tag of tags) {
+        try {
+            return await GitHub.tagCommit(repo, tag);
+        } catch (error) {
+            if (!(error instanceof CommandError)) {
+                throw error;
+            }
+        }
+    }
+    return null;
 }
 
 export type { ChangelogSource };

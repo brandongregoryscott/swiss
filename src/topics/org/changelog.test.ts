@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { CommandError } from "../../shared/exec.js";
 import { GitHub } from "../../shared/git/github.js";
 import { Changelog } from "./changelog.js";
 import { NpmRegistry } from "./npm-registry.js";
@@ -52,6 +53,59 @@ describe("Changelog", () => {
                     `[Full comparison](${COMPARE_URL})`,
                 ].join("\n")
             );
+        });
+        it("falls back to the release's git tag when npm has no git head", async () => {
+            vi.spyOn(NpmRegistry, "release").mockImplementation(
+                (_pkg, version) =>
+                    Promise.resolve({
+                        directory: null,
+                        gitHead: version === "1.0.0" ? null : "bbb",
+                        repo: REPO,
+                    })
+            );
+            const tagCommit = vi
+                .spyOn(GitHub, "tagCommit")
+                .mockImplementation((_repo, tag) =>
+                    tag === "cats@1.0.0"
+                        ? Promise.resolve("aaa")
+                        : Promise.reject(new CommandError("No commit found"))
+                );
+            const compareCommits = vi
+                .spyOn(GitHub, "compareCommits")
+                .mockResolvedValue({ commits: [], earliestDate: null });
+
+            await Changelog.between("@acme/cats", "1.0.0", "1.4.0");
+
+            expect(tagCommit.mock.calls.map(([, tag]) => tag)).toEqual([
+                "@acme/cats@1.0.0",
+                "cats@1.0.0",
+            ]);
+            expect(compareCommits).toHaveBeenCalledWith({
+                base: "aaa",
+                head: "bbb",
+                repo: REPO,
+            });
+        });
+
+        it("gives up when neither npm nor a git tag knows the release's commit", async () => {
+            vi.spyOn(NpmRegistry, "release").mockResolvedValue({
+                directory: null,
+                gitHead: null,
+                repo: REPO,
+            });
+            vi.spyOn(GitHub, "tagCommit").mockRejectedValue(
+                new CommandError("No commit found")
+            );
+            const compareCommits = vi.spyOn(GitHub, "compareCommits");
+
+            const result = await Changelog.between(
+                "@acme/cats",
+                "1.0.0",
+                "1.4.0"
+            );
+
+            expect(result).toBeNull();
+            expect(compareCommits).not.toHaveBeenCalled();
         });
     });
 

@@ -258,6 +258,20 @@ class GitHub {
         ]);
     }
 
+    static async tagCommit(repo: GitHubRepo, tag: string): Promise<string> {
+        const ref = encodeURIComponent(`refs/tags/${tag}`);
+        return Exec.run(
+            "gh",
+            [
+                "api",
+                `repos/${repo.owner}/${repo.name}/commits/${ref}`,
+                "--jq",
+                ".sha",
+            ],
+            { env: { GH_HOST: repo.host } }
+        );
+    }
+
     static webUrl(repo: GitHubRepo): string {
         return `https://${repo.host}/${repo.owner}/${repo.name}`;
     }
