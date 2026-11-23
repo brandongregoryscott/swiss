@@ -70,7 +70,7 @@
 - [`swiss serve [DIR]`](#swiss-serve-dir)
 - [`swiss table [FILE]`](#swiss-table-file)
 - [`swiss worktree [DIR]`](#swiss-worktree-dir)
-- [`swiss worktree remove [WORKTREE...] [--no-checkout] [-f] [-y]`](#swiss-worktree-remove-worktree---no-checkout--f--y)
+- [`swiss worktree remove [WORKTREE...] [-a] [--no-checkout] [-f] [-y]`](#swiss-worktree-remove-worktree--a---no-checkout--f--y)
 - [`swiss zsh alias [SEARCH]`](#swiss-zsh-alias-search)
 - [`swiss zsh alias set NAME COMMAND... [-f FILE]`](#swiss-zsh-alias-set-name-command--f-file)
 - [`swiss zsh alias unset [NAME...] [-y]`](#swiss-zsh-alias-unset-name--y)
@@ -2553,15 +2553,16 @@ EXAMPLES
     $ swiss worktree ~/code/api
 ```
 
-## `swiss worktree remove [WORKTREE...] [--no-checkout] [-f] [-y]`
+## `swiss worktree remove [WORKTREE...] [-a] [--no-checkout] [-f] [-y]`
 
 Remove linked git worktrees.
 
 ```
 USAGE
-  $ swiss worktree remove [WORKTREE...] [--no-checkout] [-f] [-y]
+  $ swiss worktree remove [WORKTREE...] [-a] [--no-checkout] [-f] [-y]
 
 FLAGS
+  -a, --all            Remove every linked worktree
   -d, --dir=<value>    [default: .] Directory in the repo whose worktrees to look in
   -f, --force          Remove them even with uncommitted changes or untracked files, or when they're locked
   -y, --yes            Remove them without asking first, which is required when there's no terminal to ask in
@@ -2570,10 +2571,11 @@ FLAGS
 DESCRIPTION
   Remove linked git worktrees.
 
-  Give worktrees by branch, path or directory name. Each one's directory is deleted, but its branch and commits are
-  kept. When there's one to remove, its branch is then checked out in the main worktree, so you can carry on there; pass
-  --no-checkout to leave the main worktree on the branch it's on. The checkout needs the main worktree to have no
-  uncommitted changes, which is checked before anything is removed.
+  Give worktrees by branch, path or directory name, or pass --all to remove every linked worktree. Each one's directory
+  is deleted, but its branch and commits are kept. When there's one to remove, its branch is then checked out in the
+  main worktree, so you can carry on there; pass --no-checkout to leave the main worktree on the branch it's on. --all
+  never checks a branch out. The checkout needs the main worktree to have no uncommitted changes, which is checked
+  before anything is removed.
 
   A worktree with uncommitted changes, untracked files or a lock is left in place unless you pass --force, which loses
   them.
@@ -2598,6 +2600,10 @@ EXAMPLES
   Remove the worktree with my-feature checked out, and check out my-feature in the main worktree
 
     $ swiss worktree remove my-feature
+
+  Remove every linked worktree, even with uncommitted changes, without asking
+
+    $ swiss worktree remove --all --force --yes
 
   Remove a worktree by path without switching branches or asking
 

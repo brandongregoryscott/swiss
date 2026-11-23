@@ -10,7 +10,7 @@ import {
     SwissCommand,
 } from "../../shared/command.js";
 import { Text } from "../../shared/text.js";
-import { Worktrees } from "../../topics/worktree/worktrees.js";
+import { WorktreeError, Worktrees } from "../../topics/worktree/worktrees.js";
 
 export default class WorktreeRemove extends SwissCommand {
     static override aliases = ["worktree:rm", "wt:remove", "wt:rm"];
@@ -19,7 +19,7 @@ export default class WorktreeRemove extends SwissCommand {
 
     static override description = `Remove linked git worktrees.
 
-Give worktrees by branch, path or directory name. Each one's directory is deleted, but its branch and commits are kept. When there's one to remove, its branch is then checked out in the main worktree, so you can carry on there; pass --no-checkout to leave the main worktree on the branch it's on. The checkout needs the main worktree to have no uncommitted changes, which is checked before anything is removed.
+Give worktrees by branch, path or directory name, or pass --all to remove every linked worktree. Each one's directory is deleted, but its branch and commits are kept. When there's one to remove, its branch is then checked out in the main worktree, so you can carry on there; pass --no-checkout to leave the main worktree on the branch it's on. --all never checks a branch out. The checkout needs the main worktree to have no uncommitted changes, which is checked before anything is removed.
 
 A worktree with uncommitted changes, untracked files or a lock is left in place unless you pass --force, which loses them.
 
@@ -38,6 +38,11 @@ If you're in a worktree being removed, cd out of it afterwards.`;
                 "Remove the worktree with my-feature checked out, and check out my-feature in the main worktree",
         },
         {
+            command: "<%= config.bin %> <%= command.id %> --all --force --yes",
+            description:
+                "Remove every linked worktree, even with uncommitted changes, without asking",
+        },
+        {
             command:
                 "<%= config.bin %> <%= command.id %> ../api-hotfix --no-checkout --yes",
             description:
@@ -46,6 +51,10 @@ If you're in a worktree being removed, cd out of it afterwards.`;
     ];
 
     static override flags = {
+        all: Flags.boolean({
+            char: "a",
+            description: "Remove every linked worktree",
+        }),
         checkout: Flags.boolean({
             allowNo: true,
             default: true,
@@ -69,10 +78,14 @@ If you're in a worktree being removed, cd out of it afterwards.`;
     static override strict = false;
 
     static override usage =
-        "worktree remove [WORKTREE...] [--no-checkout] [-f] [-y]";
+        "worktree remove [WORKTREE...] [-a] [--no-checkout] [-f] [-y]";
 
     async run(): Promise<void> {
         const { argv, flags } = await this.parse(WorktreeRemove);
+        const queries = uniq(argv as string[]);
+        if (flags.all && !isEmpty(queries)) {
+            throw new WorktreeError("Pass worktrees or --all, not both");
+        }
         const worktrees = await Worktrees.list(flags.dir);
         const main = worktrees.find((worktree) => worktree.isMain)!;
         // Read now, since process.cwd() throws once its directory is removed.
@@ -105,13 +118,17 @@ If you're in a worktree being removed, cd out of it afterwards.`;
                 ]);
                 return isEmpty(notes) ? null : notes.join("; ");
             },
-            names: uniq(argv as string[]),
+            names: flags.all
+                ? worktrees
+                      .filter((worktree) => !worktree.isMain)
+                      .map((worktree) => worktree.path)
+                : queries,
             notFound: (missing) =>
                 `No worktree has ${missing.join(", ")} checked out or is at ${missing.length === 1 ? "it" : "them"}; run \`${this.config.bin} worktree\` to list them`,
             noun: ["worktree", "worktrees"],
             plan: async (names) => {
                 plan = await Worktrees.planRemoval(worktrees, names, {
-                    checkout: flags.checkout,
+                    checkout: flags.checkout && !flags.all,
                     force: flags.force,
                 });
                 return plan;
