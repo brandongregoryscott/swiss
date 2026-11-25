@@ -59,6 +59,9 @@
             "date": {
                 "description": "Convert and compare dates and timestamps"
             },
+            "deploy": {
+                "description": "Run worktrees from fixed checkouts that a dev environment like Tilt watches, and see what each is running"
+            },
             "docker": {
                 "description": "See Docker disk usage and prune unused resources"
             },

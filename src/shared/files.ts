@@ -1,4 +1,5 @@
 import { stat } from "node:fs/promises";
+import { homedir } from "node:os";
 import path from "node:path";
 import { nullIfMissing, UserError } from "./errors.js";
 import { Text } from "./text.js";
@@ -21,6 +22,16 @@ class Files {
 
     static async exists(file: string): Promise<boolean> {
         return (await stat(file).catch(nullIfMissing)) != null;
+    }
+
+    static expandHome(dir: string): string {
+        if (dir === "~") {
+            return homedir();
+        }
+        if (dir.startsWith("~/")) {
+            return path.join(homedir(), dir.slice(2));
+        }
+        return dir;
     }
 
     // Whether dir is an existing directory. Not being able to read it counts as not, for warnings

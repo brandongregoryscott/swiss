@@ -22,6 +22,10 @@
 - [`swiss cron examples [SEARCH]`](#swiss-cron-examples-search)
 - [`swiss date [INPUT]`](#swiss-date-input)
 - [`swiss date diff START [END]`](#swiss-date-diff-start-end)
+- [`swiss deploy branch BRANCH`](#swiss-deploy-branch-branch)
+- [`swiss deploy reset [REPO...] [--pull]`](#swiss-deploy-reset-repo---pull)
+- [`swiss deploy status`](#swiss-deploy-status)
+- [`swiss deploy use [WORKTREE...]`](#swiss-deploy-use-worktree)
 - [`swiss docker`](#swiss-docker)
 - [`swiss docker prune [TARGET]`](#swiss-docker-prune-target)
 - [`swiss env [SEARCH]`](#swiss-env-search)
@@ -722,6 +726,153 @@ EXAMPLES
   Print just the number of hours in today
 
     $ swiss date diff today tomorrow --format hours
+```
+
+## `swiss deploy branch BRANCH`
+
+Deploy a branch to a repo's deploy checkout.
+
+```
+USAGE
+  $ swiss deploy branch BRANCH [--pull] [-r <value>]
+
+ARGUMENTS
+  BRANCH  The branch to deploy
+
+FLAGS
+  -r, --repo=<value>  The repo to deploy it to, which can be left out when there's only one
+      --pull          Fetch origin and deploy its branch
+
+DESCRIPTION
+  Deploy a branch to a repo's deploy checkout.
+
+  The main clone's local branch is deployed, or origin's when there's no local one. --pull fetches origin first and
+  deploys its branch even when there's a local one. Fetching never moves the main clone's own branches.
+
+  Settings live in the "deploy" section of ~/.config/swiss/config.json (or $XDG_CONFIG_HOME/swiss/config.json), which is
+  plain JSON:
+
+  {"deploy":{"dir":"~/deploy","repos":{"api":{"copy":[".env"],"path":"~/code/api"}}}}
+
+  dir    Where the deploy checkouts live, one per repo at <dir>/<name> [default: ~/deploy]
+  repos  The repos that can be deployed, by name. path is the repo's main clone, and copy lists files git ignores, like
+  .env, that are copied from it into the checkout on every deploy
+
+EXAMPLES
+  $ swiss deploy branch feature/login
+
+  Deploy origin's latest feature/login to api
+
+    $ swiss deploy branch feature/login --repo api --pull
+```
+
+## `swiss deploy reset [REPO...] [--pull]`
+
+Deploy repos' default branches to their deploy checkouts, creating any that don't exist yet.
+
+```
+USAGE
+  $ swiss deploy reset [REPO...] [--pull]
+
+FLAGS
+  --pull  Fetch origin and deploy its default branch
+
+DESCRIPTION
+  Deploy repos' default branches to their deploy checkouts, creating any that don't exist yet.
+
+  The default branch is the one origin names, or else main or master. Like `swiss deploy branch`, the main clone's local
+  branch is deployed unless --pull is passed. Without repo names, every repo is reset. Every name is checked before
+  anything moves.
+
+  Settings live in the "deploy" section of ~/.config/swiss/config.json (or $XDG_CONFIG_HOME/swiss/config.json), which is
+  plain JSON:
+
+  {"deploy":{"dir":"~/deploy","repos":{"api":{"copy":[".env"],"path":"~/code/api"}}}}
+
+  dir    Where the deploy checkouts live, one per repo at <dir>/<name> [default: ~/deploy]
+  repos  The repos that can be deployed, by name. path is the repo's main clone, and copy lists files git ignores, like
+  .env, that are copied from it into the checkout on every deploy
+
+EXAMPLES
+  Create the deploy checkouts, or put them all back on their default branch
+
+    $ swiss deploy reset
+
+  Deploy origin's latest default branch to api
+
+    $ swiss deploy reset api --pull
+```
+
+## `swiss deploy status`
+
+Show what each deploy checkout is running, and whether its source has changed since.
+
+```
+USAGE
+  $ swiss deploy status
+
+DESCRIPTION
+  Show what each deploy checkout is running, and whether its source has changed since.
+
+  STATUS is "up to date" when the checkout still matches what it was deployed from: a worktree's files, uncommitted ones
+  included, or a branch's commit as of the last fetch. "worktree changed" or "branch moved on" means deploying it again
+  would change what's running. "changed outside swiss" means the checkout was moved by something else, so where its
+  commit came from isn't known.
+
+  What's been deployed is kept in ~/.local/share/swiss/deploys.json (or $XDG_DATA_HOME/swiss/deploys.json).
+
+  Settings live in the "deploy" section of ~/.config/swiss/config.json (or $XDG_CONFIG_HOME/swiss/config.json), which is
+  plain JSON:
+
+  {"deploy":{"dir":"~/deploy","repos":{"api":{"copy":[".env"],"path":"~/code/api"}}}}
+
+  dir    Where the deploy checkouts live, one per repo at <dir>/<name> [default: ~/deploy]
+  repos  The repos that can be deployed, by name. path is the repo's main clone, and copy lists files git ignores, like
+  .env, that are copied from it into the checkout on every deploy
+
+EXAMPLES
+  $ swiss deploy status
+```
+
+## `swiss deploy use [WORKTREE...]`
+
+Deploy worktrees to their repos' deploy checkouts, uncommitted changes and untracked files included.
+
+```
+USAGE
+  $ swiss deploy use [WORKTREE...]
+
+DESCRIPTION
+  Deploy worktrees to their repos' deploy checkouts, uncommitted changes and untracked files included.
+
+  A deploy checkout is a fixed worktree of a repo that a long-running dev environment, like Tilt or docker compose
+  watch, is pointed at once. Deploying moves it onto other code, which the environment picks up like any other edit, so
+  its config never changes when you switch what's running.
+
+  Each worktree's files are snapshotted into a commit no branch points to, so its own index and git status stay as they
+  are. A worktree with nothing uncommitted deploys its HEAD. Every path is checked before anything moves, and each
+  checkout is created the first time it's deployed to. Its files git ignores, like node_modules, are kept between
+  deploys, and the repo's copy files are copied in from its main clone every time.
+
+  Run `swiss deploy status` to see what each checkout is running.
+
+  Settings live in the "deploy" section of ~/.config/swiss/config.json (or $XDG_CONFIG_HOME/swiss/config.json), which is
+  plain JSON:
+
+  {"deploy":{"dir":"~/deploy","repos":{"api":{"copy":[".env"],"path":"~/code/api"}}}}
+
+  dir    Where the deploy checkouts live, one per repo at <dir>/<name> [default: ~/deploy]
+  repos  The repos that can be deployed, by name. path is the repo's main clone, and copy lists files git ignores, like
+  .env, that are copied from it into the checkout on every deploy
+
+EXAMPLES
+  Deploy the worktree you're in
+
+    $ swiss deploy use
+
+  Deploy worktrees of two repos at once
+
+    $ swiss deploy use ~/code/api/.worktrees/feature ~/code/web
 ```
 
 ## `swiss docker`

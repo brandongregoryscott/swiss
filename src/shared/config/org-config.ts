@@ -1,7 +1,7 @@
 import { isArray, isEmpty } from "lodash-es";
-import { homedir } from "node:os";
 import path from "node:path";
 import type { ConfigSection } from "./config.js";
+import { Files } from "../files.js";
 import { Text } from "../text.js";
 import { ConfigError, ConfigFile } from "./config.js";
 
@@ -85,7 +85,7 @@ Ignore globs match the whole repo name, ignoring case: * matches any run of char
             );
         }
 
-        const rootDir = expandHome(
+        const rootDir = Files.expandHome(
             section.string("rootDir") ?? OrgConfigSection.DEFAULTS.rootDir
         );
         if (!path.isAbsolute(rootDir)) {
@@ -122,16 +122,6 @@ function describeSetting(
     const value = defaults[key];
     const display = isArray(value) && isEmpty(value) ? "none" : String(value);
     return `${SETTING_HELP[key]} [default: ${display}]`;
-}
-
-function expandHome(dir: string): string {
-    if (dir === "~") {
-        return homedir();
-    }
-    if (dir.startsWith("~/")) {
-        return path.join(homedir(), dir.slice(2));
-    }
-    return dir;
 }
 
 export type { CloneProtocol, OrgConfig };

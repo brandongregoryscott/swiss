@@ -1,10 +1,12 @@
 import { isEmpty } from "lodash-es";
 import { SwissCommand } from "../../shared/command.js";
 import { ConfigFile } from "../../shared/config/config.js";
+import { DeployConfigSection } from "../../shared/config/deploy-config.js";
 import { OrgConfigSection } from "../../shared/config/org-config.js";
 import { ZshConfigSection } from "../../shared/config/zsh-config.js";
 
 const TEMPLATES = {
+    [DeployConfigSection.NAME]: DeployConfigSection.TEMPLATE,
     [OrgConfigSection.NAME]: OrgConfigSection.TEMPLATE,
     [ZshConfigSection.NAME]: ZshConfigSection.TEMPLATE,
 };

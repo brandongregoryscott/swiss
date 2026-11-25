@@ -42,6 +42,20 @@ A sample's category, like one-shot, texture, noise, phrase or fx. `audio classif
 A stereo file with sound on only one side, like a mono mic recorded onto a stereo track, so it plays in one ear. Its quieter side is more than 20 dB below the louder one; a real stereo mix keeps them within a few dB. `audio stereo` copies the louder side onto both.
 _Avoid_: pseudo stereo, fake stereo, dead channel
 
+### deploy
+
+**Deploy checkout**:
+A locked, detached worktree of a repo at `<dir>/<name>`, which a long-running dev environment like Tilt is pointed at once. `deploy use`, `deploy branch` and `deploy reset` move it onto other code, so the environment's config never changes.
+_Avoid_: deploy folder, deploy worktree
+
+**Snapshot**:
+A commit of a worktree's files as they are on disk, uncommitted and untracked ones included, made from a copy of its index so its own git status doesn't change. No branch points to it; the deploy checkout's HEAD keeps it from being garbage collected.
+_Avoid_: stash, WIP commit
+
+**Source**:
+What a deploy checkout was last deployed from: a worktree or a branch. `deploy status` compares it with the checkout to say whether deploying again would change anything.
+_Avoid_: origin, upstream
+
 ### org
 
 **Syncable repo**:
