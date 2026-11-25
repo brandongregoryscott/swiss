@@ -14,6 +14,7 @@
 - [`swiss autocomplete`](#swiss-autocomplete)
 - [`swiss base64 decode [INPUT]`](#swiss-base64-decode-input)
 - [`swiss base64 encode [INPUT]`](#swiss-base64-encode-input)
+- [`swiss caffeine [DURATION]`](#swiss-caffeine-duration)
 - [`swiss clean [DIR]`](#swiss-clean-dir)
 - [`swiss config init`](#swiss-config-init)
 - [`swiss config show`](#swiss-config-show)
@@ -425,6 +426,31 @@ EXAMPLES
   Encode a file
 
     $ swiss base64 encode < image.png
+```
+
+## `swiss caffeine [DURATION]`
+
+Keep this Mac awake until Ctrl+C, or for a while.
+
+```
+USAGE
+  $ swiss caffeine [DURATION]
+
+ARGUMENTS
+  [DURATION]  How long to stay awake, like 30m, 2h or 1h30m; until Ctrl+C when not given
+
+DESCRIPTION
+  Keep this Mac awake until Ctrl+C, or for a while.
+
+  Holds caffeinate's display, idle and system sleep assertions. The system one keeps the Mac awake with its lid closed
+  while it's plugged in, even when an external display turns off; on battery, closing the lid still sleeps it.
+
+EXAMPLES
+  $ swiss caffeine
+
+  Stay awake for the next two hours
+
+    $ swiss caffeine 2h
 ```
 
 ## `swiss clean [DIR]`

@@ -47,6 +47,9 @@
             "base64": {
                 "description": "Encode and decode base64"
             },
+            "caffeine": {
+                "description": "Keep this Mac awake"
+            },
             "clean": {
                 "description": "Delete dependency and build output directories"
             },
