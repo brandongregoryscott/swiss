@@ -181,6 +181,35 @@ describe("Deploys.deployBranch", () => {
     });
 });
 
+describe("Deploys.summary", () => {
+    it("names the deployed commit's message", async () => {
+        const source = await Deploys.branchSource(repo, "main", false);
+        const deploy = await Deploys.deployBranch(dataDir, repo, source);
+
+        const result = await Deploys.summary(repo, deploy);
+
+        expect(result).toBe(
+            `app → ${deploy.commit.slice(0, 8)} "Initial commit", main`
+        );
+    });
+
+    it("names the worktree HEAD's message for a deploy with uncommitted changes", async () => {
+        const worktree = addWorktree("feature");
+        git(worktree, "commit", "--quiet", "--allow-empty", "-m", "Feature");
+        writeFileSync(path.join(worktree, "README.md"), "edited\n");
+        const deploy = await Deploys.deployWorktree(dataDir, {
+            repo,
+            worktree,
+        });
+
+        const result = await Deploys.summary(repo, deploy);
+
+        expect(result).toBe(
+            `app → ${deploy.commit.slice(0, 8)} "Feature", feature with uncommitted changes at ${worktree}`
+        );
+    });
+});
+
 describe("Deploys.planUse", () => {
     it("matches a worktree to its repo from a directory inside it", async () => {
         const worktree = addWorktree("feature");

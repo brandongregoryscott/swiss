@@ -64,9 +64,7 @@ ${DeployConfigSection.HELP}`;
                 repo,
                 sources[index]!
             );
-            this.log(
-                `${repo.name} → ${deploy.commit.slice(0, 8)}, ${Deploys.source(deploy.source)}`
-            );
+            this.log(await Deploys.summary(repo, deploy));
         }
     }
 }

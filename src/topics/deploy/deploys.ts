@@ -290,6 +290,19 @@ class Deploys {
         }
         return { commit, deploy, repo, state: await freshness(repo, deploy) };
     }
+
+    static async summary(repo: DeployRepo, deploy: Deploy): Promise<string> {
+        const isSnapshot =
+            deploy.source.kind === "worktree" && deploy.source.uncommitted;
+        const subject = await Git.run(
+            repo.path,
+            "log",
+            "-1",
+            "--format=%s",
+            isSnapshot ? `${deploy.commit}^` : deploy.commit
+        );
+        return `${repo.name} → ${deploy.commit.slice(0, 8)} "${subject}", ${Deploys.source(deploy.source)}`;
+    }
 }
 
 async function checkout(repo: DeployRepo, ref: string): Promise<string> {

@@ -46,9 +46,7 @@ ${DeployConfigSection.HELP}`;
                 this.config.dataDir,
                 target
             );
-            this.log(
-                `${target.repo.name} → ${deploy.commit.slice(0, 8)}, ${Deploys.source(deploy.source)}`
-            );
+            this.log(await Deploys.summary(target.repo, deploy));
         }
     }
 }
