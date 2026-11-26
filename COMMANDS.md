@@ -75,6 +75,8 @@
 - [`swiss serve [DIR]`](#swiss-serve-dir)
 - [`swiss ssh`](#swiss-ssh)
 - [`swiss ssh edit [FILE]`](#swiss-ssh-edit-file)
+- [`swiss ssh examples [SEARCH]`](#swiss-ssh-examples-search)
+- [`swiss ssh forward HOST PORTS`](#swiss-ssh-forward-host-ports)
 - [`swiss ssh hosts [SEARCH]`](#swiss-ssh-hosts-search)
 - [`swiss ssh keys [SEARCH]`](#swiss-ssh-keys-search)
 - [`swiss table [FILE]`](#swiss-table-file)
@@ -2712,6 +2714,85 @@ EXAMPLES
   Open your known hosts, like to remove a stale one
 
     $ swiss ssh edit known_hosts
+```
+
+## `swiss ssh examples [SEARCH]`
+
+List ssh commands worth remembering: port forwarding, jump hosts, agent forwarding, keys, copying files and debugging connections.
+
+```
+USAGE
+  $ swiss ssh examples [SEARCH...]
+
+ARGUMENTS
+  [SEARCH...]  Only show examples whose command or description has all of these words, like 'forward' or 'known_hosts'
+
+DESCRIPTION
+  List ssh commands worth remembering: port forwarding, jump hosts, agent forwarding, keys, copying files and debugging
+  connections.
+
+  To forward ports without remembering the flags, use `swiss ssh forward`.
+
+EXAMPLES
+  List every example
+
+    $ swiss ssh examples
+
+  Find the port forwarding commands
+
+    $ swiss ssh examples forward
+```
+
+## `swiss ssh forward HOST PORTS`
+
+Forward ports between this machine and another over ssh, without remembering -L's argument order.
+
+```
+USAGE
+  $ swiss ssh forward HOST... PORTS... [--print] [-R] [--shell] [--target <value>]
+
+ARGUMENTS
+  HOST...   Host to connect to, like a Host from your ssh config
+  PORTS...  Ports to forward: 3000, a range like 3100-3105, a list like 3000,5432, or 8080:80 for a different port on
+            each side
+
+FLAGS
+  -R, --reverse         Forward ports on the other machine to this one (ssh -R) instead
+      --print           Print the ssh command instead of running it
+      --shell           Open a shell on the host as well, instead of ssh -N
+      --target=<value>  [default: localhost] Where forwarded connections go, resolved on the far side: the host for a
+                        normal forward, this machine with --reverse
+
+DESCRIPTION
+  Forward ports between this machine and another over ssh, without remembering -L's argument order.
+
+  By default each port on the other machine is reached here: localhost:3100 here talks to localhost:3100 there.
+  --reverse does the opposite, so the other machine reaches ports on this one.
+
+  No shell is opened (ssh -N); the forwards stay up until Ctrl+C. ssh is told to fail straight away when a port can't be
+  forwarded, like when it's already in use here, rather than connecting without it. The ssh command is printed before it
+  runs, so you can reuse it; --print prints it without running it.
+
+EXAMPLES
+  Reach ports 3100 to 3105 on work at localhost:3100-3105 here
+
+    $ swiss ssh forward work 3100-3105
+
+  Forward several ports, with 8080 here reaching 80 there
+
+    $ swiss ssh forward work 3000 5432 8080:80
+
+  Let work reach port 3000 on this machine
+
+    $ swiss ssh forward work 3000 --reverse
+
+  Reach a database that only bastion can see
+
+    $ swiss ssh forward bastion 5432 --target db.internal
+
+  Print the ssh command without running it
+
+    $ swiss ssh forward work 3100-3105 --print
 ```
 
 ## `swiss ssh hosts [SEARCH]`
