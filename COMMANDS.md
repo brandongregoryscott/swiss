@@ -73,6 +73,10 @@
 - [`swiss port:kill PORT... [-f] [-y]`](#swiss-portkill-port--f--y)
 - [`swiss repo rename [OWNER]`](#swiss-repo-rename-owner)
 - [`swiss serve [DIR]`](#swiss-serve-dir)
+- [`swiss ssh`](#swiss-ssh)
+- [`swiss ssh edit [FILE]`](#swiss-ssh-edit-file)
+- [`swiss ssh hosts [SEARCH]`](#swiss-ssh-hosts-search)
+- [`swiss ssh keys [SEARCH]`](#swiss-ssh-keys-search)
 - [`swiss table [FILE]`](#swiss-table-file)
 - [`swiss worktree [DIR]`](#swiss-worktree-dir)
 - [`swiss worktree remove [WORKTREE...] [-a] [--no-checkout] [-f] [-y]`](#swiss-worktree-remove-worktree--a---no-checkout--f--y)
@@ -2651,6 +2655,127 @@ EXAMPLES
   Serve on port 3000 to pages on other origins
 
     $ swiss serve -p 3000 --cors
+```
+
+## `swiss ssh`
+
+List your ssh files: your config and the files it includes, known hosts, authorized keys, and key pairs, with what's in each.
+
+```
+USAGE
+  $ swiss ssh [-t]
+
+FLAGS
+  -t, --table  Print a table instead of picking from a list; the default when there's no terminal or the output is piped
+
+DESCRIPTION
+  List your ssh files: your config and the files it includes, known hosts, authorized keys, and key pairs, with what's
+  in each.
+
+  In a terminal, pick from a list: type to filter, and Enter to open it in VS Code. The list stays open until Esc.
+  --table prints a table instead, which is what happens when there's no terminal or the output is piped.
+
+  Config files are ~/.ssh/config and any it pulls in with Include, wherever they are. Everything else is what's in
+  ~/.ssh. A private key that other users can read is flagged, since ssh refuses to use it.
+
+  To open your config straight away, use `swiss ssh edit`. To see your hosts, use `swiss ssh hosts`, and to copy a
+  public key, `swiss ssh keys`.
+
+EXAMPLES
+  $ swiss ssh
+
+  Print them as a table
+
+    $ swiss ssh --table
+```
+
+## `swiss ssh edit [FILE]`
+
+Open your ssh config, or another ssh file, in VS Code.
+
+```
+USAGE
+  $ swiss ssh edit [FILE]
+
+ARGUMENTS
+  [FILE]  [default: config] File to open, relative to ~/.ssh, like known_hosts, or a path
+
+DESCRIPTION
+  Open your ssh config, or another ssh file, in VS Code.
+
+  ~/.ssh/config is created when it doesn't exist yet, readable only by you, as ssh requires. To pick from all your ssh
+  files, use `swiss ssh`.
+
+EXAMPLES
+  $ swiss ssh edit
+
+  Open your known hosts, like to remove a stale one
+
+    $ swiss ssh edit known_hosts
+```
+
+## `swiss ssh hosts [SEARCH]`
+
+List the Host entries in your ssh config and the files it includes, with the HostName, user and port each sets.
+
+```
+USAGE
+  $ swiss ssh hosts [SEARCH] [-t]
+
+ARGUMENTS
+  [SEARCH]  Only show hosts whose name, HostName or user contains this, ignoring case, or matches a glob like 'AWS_*'
+
+FLAGS
+  -t, --table  Print a table instead of picking from a list; the default when there's no terminal or the output is piped
+
+DESCRIPTION
+  List the Host entries in your ssh config and the files it includes, with the HostName, user and port each sets.
+
+  In a terminal, pick from a list: type to filter, and Enter to open it in VS Code. The list stays open until Esc.
+  --table prints a table instead, which is what happens when there's no terminal or the output is piped.
+
+  When a host sets something more than once, the first one is shown, since that's the one ssh uses.
+
+EXAMPLES
+  $ swiss ssh hosts
+
+  Find the hosts with prod in their name or address
+
+    $ swiss ssh hosts prod
+```
+
+## `swiss ssh keys [SEARCH]`
+
+List the key pairs in ~/.ssh, with each one's type, fingerprint and comment.
+
+```
+USAGE
+  $ swiss ssh keys [SEARCH] [-t] [--private]
+
+ARGUMENTS
+  [SEARCH]  Only show keys whose name or comment contains this, ignoring case, or matches a glob like 'AWS_*'
+
+FLAGS
+  -t, --table    Print a table instead of picking from a list; the default when there's no terminal or the output is
+                 piped
+      --private  Copy the private key instead of the public key
+
+DESCRIPTION
+  List the key pairs in ~/.ssh, with each one's type, fingerprint and comment.
+
+  In a terminal, pick from a list: type to filter, and Enter to copy its public key, like for adding it to GitHub. The
+  list stays open until Esc. --table prints a table instead, which is what happens when there's no terminal or the
+  output is piped.
+
+  --private copies the private key instead, for pasting into something like a CI secret. Clipboard managers keep a
+  history of what's copied, so clear it from yours afterwards.
+
+EXAMPLES
+  $ swiss ssh keys
+
+  Copy the private key of a key pair named github
+
+    $ swiss ssh keys github --private
 ```
 
 ## `swiss table [FILE]`

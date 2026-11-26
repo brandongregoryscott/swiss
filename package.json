@@ -101,6 +101,9 @@
             "serve": {
                 "description": "Serve a directory over HTTP"
             },
+            "ssh": {
+                "description": "View and open your ssh config, known hosts and keys, and copy keys"
+            },
             "table": {
                 "description": "Fill out markdown tables for GitHub in the browser"
             },
