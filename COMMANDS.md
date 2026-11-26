@@ -434,10 +434,13 @@ Keep this Mac awake until Ctrl+C, or for a while.
 
 ```
 USAGE
-  $ swiss caffeine [DURATION]
+  $ swiss caffeine [DURATION] [--pid <value>]
 
 ARGUMENTS
   [DURATION]  How long to stay awake, like 30m, 2h or 1h30m; until Ctrl+C when not given
+
+FLAGS
+  --pid=<value>  Only stay awake while this process runs too
 
 DESCRIPTION
   Keep this Mac awake until Ctrl+C, or for a while.
@@ -445,12 +448,19 @@ DESCRIPTION
   Holds caffeinate's display, idle and system sleep assertions. The system one keeps the Mac awake with its lid closed
   while it's plugged in, even when an external display turns off; on battery, closing the lid still sleeps it.
 
+  --pid ties the hold to another process too, so an app or script that starts this can't leave the Mac awake after it's
+  gone, however it exits. The "Keeping this Mac awake" line is printed once the hold is in place.
+
 EXAMPLES
   $ swiss caffeine
 
   Stay awake for the next two hours
 
     $ swiss caffeine 2h
+
+  Stay awake while process 4321 runs
+
+    $ swiss caffeine --pid 4321
 ```
 
 ## `swiss clean [DIR]`
